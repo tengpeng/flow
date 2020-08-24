@@ -35,7 +35,7 @@ type dep struct {
 
 type flowRun struct {
 	gorm.Model
-	RunID    string `gorm:"AUTO_INCREMENT"`
+	RunID    string `gorm:"default:1;AUTO_INCREMENT"`
 	FlowName string
 	Time     time.Time
 	Status   int
@@ -59,6 +59,8 @@ const (
 	OK
 	FAIL
 )
+
+//TODO: refactor
 
 func (f flow) generateDep() {
 	var tasks []task
@@ -174,6 +176,7 @@ func (t *taskRun) delParent() {
 	db.Delete(&deps)
 }
 
+//TODO: refactor
 func (t *taskRun) run() {
 	if t.retryCnt == 0 {
 		t.Status = FAIL

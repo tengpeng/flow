@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -16,37 +15,15 @@ var db *gorm.DB
 func main() {
 	log.Info("Bayesnote flow started")
 
-	os.Remove("flow.db")
+	// os.Remove("flow.db")
 
-	initDB()
-	setUpTestDB()
+	// initDB()
+	// setUpTestDB()
 
-	testFlow()
+	//testFlow()
 	//cronTrigger()
-	//init internal flow data
 
-	// db, err := gorm.Open("sqlite3", "flow.db")
-	// if err != nil {
-	// 	panic("failed to connect database")
-	// }
-	// defer db.Close()
-
-	// // Migrate the schema
-	// db.AutoMigrate(&Product{})
-
-	// // Create
-	// db.Create(&Product{Code: "L1212", Price: 1000})
-
-	// // Read
-	// var product Product
-	// db.First(&product, 1)                   // find product with id 1
-	// db.First(&product, "code = ?", "L1212") // find product with code l1212
-
-	// // Update - update product's price to 2000
-	// db.Model(&product).Update("Price", 2000)
-
-	// // Delete - delete product
-	// db.Delete(&product)
+	deploy()
 }
 
 func testFlow() {
@@ -72,4 +49,10 @@ func startFlowRun() {
 	f.generateDep()
 
 	f.run()
+}
+
+func deploy() {
+	t := target{Name: "test", User: "root", Password: "z", IP: "0.0.0.0"}
+	r := newRemote(t)
+	r.deployBinary()
 }
