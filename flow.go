@@ -1,11 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"io/ioutil"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -48,6 +50,7 @@ type taskRun struct {
 	Next     string
 	Status   int
 	retryCnt int
+	Notebook string
 }
 
 const (
@@ -108,6 +111,7 @@ func (r *flowRun) start() {
 	log.Info("Flow run started")
 }
 
+//TODO: tests
 func (r *flowRun) status(done chan struct{}) {
 out:
 	for {
@@ -181,15 +185,27 @@ func (t *taskRun) run() {
 	t.Status = RUNNING
 	db.Model(t).Update("status", RUNNING)
 
-	cmd := exec.Command("pwd")
-	fmt.Println(t.Name + " pwd")
+	out := "temp" + "-" + t.Name
+	oPath := filepath.Join("data", out+".ipynb")
+	cmd := exec.Command("jupyter", "nbconvert", "--to", "notebook",
+		"--output", out, "--execute", t.Path, "--ExecutePreprocessor.timeout=3600")
 	err := cmd.Run()
 	if err != nil {
+		log.Error(err)
 		t.run()
 		return
 	}
 
 	t.Status = OK
-	db.Model(t).Update("status", OK)
+	log.WithFields(logrus.Fields{
+		"task": t.Name,
+	}).Info("Task run OK")
+
+	notebook, err := ioutil.ReadFile(oPath)
+	if err != nil {
+		log.Error(err)
+	}
+
+	db.Model(t).Update("status", OK, "notebook", string(notebook))
 	t.delParent()
 }
