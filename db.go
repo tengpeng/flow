@@ -37,7 +37,6 @@ func initialMigration() {
 	db.AutoMigrate(&dep{})
 	db.AutoMigrate(&flowRun{})
 	db.AutoMigrate(&taskRun{})
-	// db.AutoMigrate(&vertex{})
 }
 
 func setUpTestDB() {
@@ -46,7 +45,7 @@ func setUpTestDB() {
 	t2 := &task{FlowName: "wf1", Name: "nb2", Path: "data/nb2.ipynb", Next: "nb3"}
 	t3 := &task{FlowName: "wf1", Name: "nb3", Path: "data/nb3.ipynb"}
 
-	f := &flow{FlowName: "wf1", Target: "test", Schedule: "*/5 * * * *"}
+	f := &flow{FlowName: "wf1", Target: "test", Schedule: "* * * * *"}
 
 	db.Create(f)
 	db.Create(t)

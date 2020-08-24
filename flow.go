@@ -26,9 +26,9 @@ type task struct {
 
 type dep struct {
 	gorm.Model
-	FlowName   string `gorm:"not null"`
-	Upstream   string `gorm:"not null"`
-	Downstream string `gorm:"not null"`
+	FlowName string `gorm:"not null"`
+	Parent   string `gorm:"not null"`
+	Child    string `gorm:"not null"`
 }
 
 type flowRun struct {
@@ -57,22 +57,13 @@ const (
 	FAIL
 )
 
-type vertex struct {
-	gorm.Model
-	Name       string
-	Status     string
-	RetryCnt   int
-	Upstream   []string
-	Downstream []string
-}
-
 func (f flow) generateDep() {
 	var tasks []task
 	db.Find(&tasks, "flow_name = ?", f.FlowName)
 
 	for _, t := range tasks {
 		if len(t.Next) > 0 {
-			db.Create(&dep{FlowName: t.FlowName, Upstream: t.Name, Downstream: t.Next})
+			db.Create(&dep{FlowName: t.FlowName, Parent: t.Name, Child: t.Next})
 		}
 	}
 }
@@ -156,7 +147,7 @@ func (t *taskRun) start() {
 	db.Model(t).Update("Status", READY)
 
 	for {
-		if t.checkUpstream() {
+		if t.checkParent() {
 			t.run()
 			break
 		}
@@ -164,19 +155,18 @@ func (t *taskRun) start() {
 	}
 }
 
-func (t taskRun) checkUpstream() bool {
+func (t taskRun) checkParent() bool {
 	var deps []dep
-	db.Find(&deps, "downstream = ?", t.Name)
-
+	db.Find(&deps, "child = ?", t.Name)
 	if len(deps) == 0 {
 		return true
 	}
 	return false
 }
 
-func (t *taskRun) delUpstream() {
+func (t *taskRun) delParent() {
 	var deps []dep
-	db.Find(&deps, "upstream = ?", t.Name)
+	db.Find(&deps, "parent = ?", t.Name)
 	db.Delete(&deps)
 }
 
@@ -201,5 +191,5 @@ func (t *taskRun) run() {
 
 	t.Status = OK
 	db.Model(t).Update("status", OK)
-	t.delUpstream()
+	t.delParent()
 }
