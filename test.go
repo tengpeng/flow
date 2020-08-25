@@ -48,7 +48,7 @@ func localTestForward() {
 
 	r.localAddr = "0.0.0.0:8000"
 	r.remoteAddr = "0.0.0.0:9000"
-	r.serverAddr = "0.0.0.0:32772"
+	r.serverAddr = "0.0.0.0:22"
 
 	log.Info("forwarding")
 

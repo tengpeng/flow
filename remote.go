@@ -44,7 +44,7 @@ type remote struct {
 //TODO: check jupyter installation
 //TODO: error handling
 func newRemote(t target) remote {
-	t.checkPort("32772")
+	t.checkPort("22")
 
 	config := t.newConfig()
 	r := remote{client: t.dial(config), config: config}
@@ -245,7 +245,7 @@ func (t target) newConfig() *ssh.ClientConfig {
 }
 
 func (t target) dial(config *ssh.ClientConfig) *ssh.Client {
-	client, err := ssh.Dial("tcp", t.IP+":"+"32772", config)
+	client, err := ssh.Dial("tcp", t.IP+":"+"22", config)
 	if err != nil {
 		log.Error(err, t.IP, config.Config)
 	} else {
