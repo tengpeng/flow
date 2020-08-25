@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -15,13 +14,14 @@ var db *gorm.DB
 func main() {
 	log.Info("Bayesnote flow started")
 
-	os.Remove("flow.db")
+	//os.Remove("flow.db")
 	initDB()
 
 	//testForward()
 	go localTestForward()
 
 	go watchNewFlow()
+
 	r := server()
 	r.Run(":9000")
 }

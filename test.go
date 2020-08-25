@@ -46,7 +46,7 @@ func localTestForward() {
 	t := target{Name: "test", User: "root", Password: "z", IP: "0.0.0.0"}
 	r := newRemote(t)
 
-	r.localAddr = "localhost:8000"
+	r.localAddr = "0.0.0.0:8000"
 	r.remoteAddr = "0.0.0.0:9000"
 	r.serverAddr = "0.0.0.0:32772"
 
