@@ -16,6 +16,8 @@ func server() *gin.Engine {
 	}))
 
 	r.GET("/ping", ping)
+	r.POST("/targets", newTarget)
+	r.POST("/targets/:name", newDeployment)
 	r.POST("/flows", newFlow)
 	r.GET("/runs", getRuns)
 
@@ -26,6 +28,41 @@ func ping(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "pong",
 	})
+}
+
+func newTarget(c *gin.Context) {
+	//write to db
+	var t target
+	err := c.BindJSON(&t)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = db.Create(&t).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//new target
+	// r := newRemote(t)
+
+	//TODO: ping remote
+}
+
+func newDeployment(c *gin.Context) {
+	name := c.Param("name")
+
+	var t target
+	err := db.Find(&t, "name = ?", name).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	r := newRemote(t)
+	r.deployBinary()
 }
 
 //TODO: or update

@@ -16,6 +16,7 @@ type flow struct {
 	FlowName string `gorm:"unique;not null" json:"FlowName"`
 	Target   string `gorm:"not null" json:"Target"`
 	Schedule string `gorm:"not null" json:"Schedule"`
+	Status   string
 }
 
 type task struct {
@@ -61,6 +62,10 @@ const (
 )
 
 //TODO: refactor
+func (f *flow) start() {
+	f.generateDep()
+	f.run()
+}
 
 func (f flow) generateDep() {
 	var tasks []task

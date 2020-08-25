@@ -35,6 +35,7 @@ func initialMigration() {
 
 	db.AutoMigrate(&flow{})
 	db.AutoMigrate(&target{})
+	db.AutoMigrate(&remote{})
 	db.AutoMigrate(&task{})
 	db.AutoMigrate(&dep{})
 	db.AutoMigrate(&flowRun{})

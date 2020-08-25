@@ -2,12 +2,13 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,27 +28,51 @@ type target struct {
 	Pem      string `json:"Pem"`
 }
 
+//TODO: uniqueness
 type remote struct {
-	client     *ssh.Client
-	config     *ssh.ClientConfig
-	serverAddr string
-	localAddr  string
-	remoteAddr string
-	home       string
-	localConn  net.Conn
+	gorm.Model
+	Name       string `gorm:"unique;not null"`
+	serverAddr string `gorm:"not null"`
+	localAddr  string `gorm:"not null"`
+	remoteAddr string `gorm:"not null"`
+	remoteHome string `gorm:"not null"`
+
+	client *ssh.Client
+	config *ssh.ClientConfig
 }
 
-//deploy to remote
-//dispatch flow
-//get flow run + notebook
-
+//TODO: check jupyter installation
 //TODO: error handling
 func newRemote(t target) remote {
 	t.checkPort("32772")
+
 	config := t.newConfig()
 	r := remote{client: t.dial(config), config: config}
-	r.getHome()
+
+	//r.getHome()
+
+	// r.serverAddr = t.IP + ":22"
+	// r.localAddr = "8000"  //getFreePort()
+	// r.remoteAddr = "9000" //TODO
+
+	// go r.forward()
+
+	// db.Create(&r)
 	return r
+}
+
+//TODO: stop run
+//TODO: progress bar
+//TODO: websocket
+//TODO: check if running
+func (r remote) deployBinary() {
+	fileName := "flow"
+	srcPath := filepath.Join(".", fileName)
+	destPath := filepath.Join(r.remoteHome, fileName)
+
+	r.runCommand("rm " + destPath)
+	r.copyFile(srcPath, destPath)
+	r.runCommand(destPath + " &")
 }
 
 func (r *remote) getHome() {
@@ -55,32 +80,47 @@ func (r *remote) getHome() {
 	if err != nil {
 		log.Error(err)
 	}
-	r.home = filepath.Join(homeDir)
+	r.remoteHome = filepath.Join(homeDir)
 	log.Info("Remote home dir: ", homeDir)
 }
 
-//TODO: stop run
-func (r remote) deployBinary() {
-	fileName := "flow"
-	srcPath := filepath.Join(".", fileName)
-	destPath := filepath.Join(r.home, fileName)
+func (r *remote) forward() {
+	localListener, err := net.Listen("tcp", r.localAddr)
+	if err != nil {
+		log.Fatalf("net.Listen failed: %v", err)
+	}
 
-	r.runCommand("rm " + destPath)
-	r.copyFile(srcPath, destPath)
-	r.runCommand(destPath + " &")
+	for {
+		localConn, err := localListener.Accept()
+		if err != nil {
+			log.Fatalf("listen.Accept failed: %v", err)
+		}
+
+		go r.connect(localConn)
+		fmt.Println("localConn >")
+	}
 }
 
-func (r remote) dispatchFlow(ID string) {
-	var f flow
-	db.Find(&f, "id = ?", ID)
-
-	byte, err := json.Marshal(f)
+func (r *remote) connect(localConn net.Conn) {
+	fmt.Println("conenct")
+	sshConn, err := r.client.Dial("tcp", r.remoteAddr)
 	if err != nil {
 		log.Error(err)
 	}
 
-	dstPath := filepath.Join(r.home, ID)
-	r.copyByte(byte, dstPath)
+	go func() {
+		_, err = io.Copy(sshConn, localConn)
+		if err != nil {
+			log.Fatalf("io.Copy failed: %v", err)
+		}
+	}()
+
+	go func() {
+		_, err = io.Copy(localConn, sshConn)
+		if err != nil {
+			log.Fatalf("io.Copy failed: %v", err)
+		}
+	}()
 }
 
 func (r remote) createDstFile(dstPath string) *sftp.File {
@@ -94,7 +134,6 @@ func (r remote) createDstFile(dstPath string) *sftp.File {
 		log.Error(err, dstPath)
 	}
 
-	dstFile.Chmod(777)
 	if err != nil {
 		log.Error(err)
 	}
@@ -102,6 +141,7 @@ func (r remote) createDstFile(dstPath string) *sftp.File {
 	return dstFile
 }
 
+//TODO: compare size of files
 func (r remote) copyFile(srcPath string, dstPath string) {
 	dstFile := r.createDstFile(dstPath)
 
@@ -115,6 +155,11 @@ func (r remote) copyFile(srcPath string, dstPath string) {
 		log.Error(err, srcPath, dstPath)
 	}
 
+	err = dstFile.Chmod(777) //TODO
+	if err != nil {
+		log.Error(err)
+	}
+
 	dstFile.Close()
 
 	log.WithFields(logrus.Fields{
@@ -122,21 +167,6 @@ func (r remote) copyFile(srcPath string, dstPath string) {
 		"dst":   dstPath,
 		"bytes": bytes,
 	}).Info("Copy file ")
-}
-
-func (r remote) copyByte(src []byte, dstPath string) {
-	dstFile := r.createDstFile(dstPath)
-
-	bytes, err := dstFile.ReadFrom(bytes.NewReader(src))
-	if err != nil {
-		log.Error(err, dstPath)
-	}
-	dstFile.Close()
-
-	log.WithFields(logrus.Fields{
-		"dst":   dstPath,
-		"bytes": bytes,
-	}).Info("Copy file OK")
 }
 
 func (r remote) runCommand(cmd string) (string, error) {
@@ -168,10 +198,7 @@ func (r remote) runCommand(cmd string) (string, error) {
 }
 
 func (t target) newClientPemConfig() *ssh.ClientConfig {
-	err := os.Chmod(t.Pem, 400)
-	if err != nil {
-		log.Fatal(err)
-	}
+	//TODO: Check permission 400
 
 	pemBytes, err := ioutil.ReadFile(t.Pem)
 	if err != nil {
@@ -227,50 +254,23 @@ func (t target) dial(config *ssh.ClientConfig) *ssh.Client {
 	return client
 }
 
-func (r remote) forward() {
-	localListener, err := net.Listen("tcp", r.localAddr)
-	if err != nil {
-		log.Fatalf("net.Listen failed: %v", err)
-	}
-
-	for {
-		r.localConn, err = localListener.Accept()
-		if err != nil {
-			log.Fatalf("listen.Accept failed: %v", err)
-		}
-		go r.connect()
-	}
-}
-
-func (r remote) connect() {
-	sshConn, err := r.client.Dial("tcp", r.remoteAddr)
-
-	go func() {
-		_, err = io.Copy(sshConn, r.localConn)
-		if err != nil {
-			log.Fatalf("io.Copy failed: %v", err)
-		}
-	}()
-
-	// Copy sshConn.Reader to localConn.Writer
-	go func() {
-		_, err = io.Copy(r.localConn, sshConn)
-		if err != nil {
-			log.Fatalf("io.Copy failed: %v", err)
-		}
-	}()
-}
-
 func (t target) checkPort(port string) {
 	for i := 0; i < 5; i++ {
+		time.Sleep(time.Second)
 		conn, err := net.DialTimeout("tcp", net.JoinHostPort(t.IP, port), time.Second)
 		if err != nil {
 			log.Error("CheckPorts failed:", err)
-			time.Sleep(time.Second)
 		} else {
 			defer conn.Close()
 			log.Info("Opened ", net.JoinHostPort(t.IP, port))
 			break
 		}
 	}
+}
+
+func getFreePort() string {
+	addr, _ := net.ResolveTCPAddr("tcp", "localhost:0")
+	l, _ := net.ListenTCP("tcp", addr)
+	defer l.Close()
+	return strconv.Itoa(l.Addr().(*net.TCPAddr).Port)
 }
