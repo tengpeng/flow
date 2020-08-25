@@ -122,8 +122,8 @@ func (r *FlowRun) start() {
 func (r *FlowRun) status(done chan struct{}) {
 out:
 	for {
-		for _, t := range r.tasks {
-			if t.Status == FAIL {
+		for i := range r.tasks {
+			if r.tasks[i].Status == FAIL {
 				db.Model(r).Update("Status", FAIL)
 				log.Info("Flow run Failed")
 				break out
@@ -183,12 +183,15 @@ func (t *TaskRun) delParent() {
 //TODO: check if jupyter installed
 func (t *TaskRun) run() {
 	if t.retryCnt == 0 {
+		t.retryCnt--
 		t.Status = FAIL
 		db.Model(t).Update("status", FAIL)
+		log.WithFields(logrus.Fields{
+			"task": t.Name,
+		}).Info("Task run failed")
 		return
 	}
 
-	t.retryCnt--
 	t.Status = RUNNING
 	db.Model(t).Update("status", RUNNING) //TODO: failed ?
 
