@@ -50,7 +50,7 @@ type TaskRun struct {
 	Name      string
 	Path      string
 	Status    int
-	retryCnt  int
+	runCnt    int
 	Notebook  string
 }
 
@@ -92,7 +92,7 @@ func (f *Flow) run() {
 	db.Find(&tasks, "flow_id = ?", f.ID)
 	r.setTasks(tasks) //Move this
 
-	r.start()
+	go r.start()
 	go r.status(done)
 
 	<-done
@@ -101,7 +101,7 @@ func (f *Flow) run() {
 // task -> taskrun
 func (r *FlowRun) setTasks(tasks []Task) {
 	for _, t := range tasks {
-		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, retryCnt: 2, Status: READY}
+		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, runCnt: 2, Status: READY}
 		r.tasks = append(r.tasks, tr)
 		db.Create(&tr)
 	}
@@ -182,8 +182,7 @@ func (t *TaskRun) delParent() {
 //TODO: refactor
 //TODO: check if jupyter installed
 func (t *TaskRun) run() {
-	if t.retryCnt == 0 {
-		t.retryCnt--
+	if t.runCnt == 0 {
 		t.Status = FAIL
 		db.Model(t).Update("status", FAIL)
 		log.WithFields(logrus.Fields{
@@ -192,6 +191,7 @@ func (t *TaskRun) run() {
 		return
 	}
 
+	t.runCnt--
 	t.Status = RUNNING
 	db.Model(t).Update("status", RUNNING) //TODO: failed ?
 
