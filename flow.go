@@ -49,7 +49,6 @@ type TaskRun struct {
 	FlowRunID uint
 	Name      string
 	Path      string
-	Next      string
 	Status    int
 	retryCnt  int
 	Notebook  string
@@ -101,9 +100,8 @@ func (f *Flow) run() {
 
 // task -> taskrun
 func (r *FlowRun) setTasks(tasks []Task) {
-
 	for _, t := range tasks {
-		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, Next: t.Next, retryCnt: 2, Status: READY}
+		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, retryCnt: 2, Status: READY}
 		r.tasks = append(r.tasks, tr)
 		db.Create(&tr)
 	}
@@ -156,9 +154,6 @@ func (r FlowRun) done() bool {
 }
 
 func (t *TaskRun) start() {
-	t.Status = READY
-	db.Model(t).Update("Status", READY)
-
 	for {
 		if t.checkParent() {
 			t.run()
@@ -199,7 +194,7 @@ func (t *TaskRun) run() {
 
 	out := "temp" + "-" + t.Name
 	oPath := filepath.Join("data", out+".ipynb")
-	cmd := exec.Command("jupyter", "nbconvert", "--to", "notebook",
+	cmd := exec.Command("x", "nbconvert", "--to", "notebook",
 		"--output", out, "--execute", t.Path, "--ExecutePreprocessor.timeout=3600")
 	err := cmd.Run()
 	if err != nil {
