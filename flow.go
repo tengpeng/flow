@@ -22,7 +22,7 @@ type Flow struct {
 
 type Task struct {
 	gorm.Model
-	FlowID   int
+	FlowID   uint
 	FlowName string `gorm:"not null" json:"FlowName"` //TODO: use flowID instead
 	Name     string `gorm:"not null" json:"Name"`
 	Path     string `gorm:"not null" json:"Path"`
@@ -38,6 +38,7 @@ type dep struct {
 
 type FlowRun struct {
 	gorm.Model
+	FlowID   uint
 	FlowName string
 	Time     time.Time
 	Status   int
@@ -45,7 +46,7 @@ type FlowRun struct {
 }
 
 type TaskRun struct {
-	FlowRunID string
+	FlowRunID uint
 	Name      string
 	Path      string
 	Next      string
@@ -82,13 +83,16 @@ func (f Flow) generateDep() {
 func (f *Flow) run() {
 	done := make(chan struct{})
 
-	db.Create(&FlowRun{FlowName: f.FlowName, Time: time.Now(), Status: READY})
+	db.Create(&FlowRun{FlowID: f.ID, FlowName: f.FlowName, Time: time.Now(), Status: READY})
 	log.Info("Flow run created")
 
 	var r FlowRun
 	db.First(&r, "status = ?", READY)
 
-	r.setTasks() //Move this
+	var tasks []Task
+	db.Find(&tasks, "flow_id = ?", f.ID)
+	r.setTasks(tasks) //Move this
+
 	r.start()
 	go r.status(done)
 
@@ -96,12 +100,10 @@ func (f *Flow) run() {
 }
 
 // task -> taskrun
-func (r *FlowRun) setTasks() {
-	var tasks []Task
-	db.Find(&tasks, "flow_name = ?", r.FlowName)
+func (r *FlowRun) setTasks(tasks []Task) {
 
 	for _, t := range tasks {
-		tr := TaskRun{Name: t.Name, Path: t.Path, Next: t.Next, retryCnt: 2, Status: READY}
+		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, Next: t.Next, retryCnt: 2, Status: READY}
 		r.tasks = append(r.tasks, tr)
 		db.Create(&tr)
 	}
@@ -166,6 +168,7 @@ func (t *TaskRun) start() {
 	}
 }
 
+//TODO: ID
 func (t TaskRun) checkParent() bool {
 	var deps []dep
 	db.Find(&deps, "child = ?", t.Name)
