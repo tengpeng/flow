@@ -25,12 +25,6 @@ func server() *gin.Engine {
 	return r
 }
 
-func getFlows(c *gin.Context) {
-	var f Flow
-	db.First(&f, 1)
-	c.JSON(http.StatusOK, f)
-}
-
 func ping(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "pong",
@@ -90,6 +84,12 @@ func newFlow(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "OK",
 	})
+}
+
+func getFlows(c *gin.Context) {
+	var f Flow
+	db.First(&f, 1)
+	c.JSON(http.StatusOK, f)
 }
 
 func getRuns(c *gin.Context) {
