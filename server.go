@@ -67,7 +67,7 @@ func newDeployment(c *gin.Context) {
 
 //TODO: or update
 func newFlow(c *gin.Context) {
-	var f flow
+	var f Flow
 	err := c.BindJSON(&f)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

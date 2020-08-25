@@ -8,7 +8,7 @@ import (
 )
 
 func startFlowRun() {
-	var f flow
+	var f Flow
 	db.First(&f, 1)
 	f.generateDep()
 	f.run()
@@ -21,7 +21,7 @@ func deploy() {
 }
 
 func exportFlow() {
-	var f flow
+	var f Flow
 	db.First(&f, 1)
 	b, err := json.Marshal(f)
 	if err != nil {

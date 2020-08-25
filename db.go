@@ -33,10 +33,10 @@ func initialMigration() {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&flow{})
+	db.AutoMigrate(&Flow{})
 	db.AutoMigrate(&target{})
 	db.AutoMigrate(&remote{})
-	db.AutoMigrate(&task{})
+	db.AutoMigrate(&Task{})
 	db.AutoMigrate(&dep{})
 	db.AutoMigrate(&flowRun{})
 	db.AutoMigrate(&taskRun{})
@@ -44,17 +44,15 @@ func initialMigration() {
 
 func setUpTestDB() {
 	t := &target{Name: "test", User: "root", Password: "z", IP: "0.0.0.0"}
-	t1 := &task{FlowName: "wf1", Name: "nb1", Path: "data/nb1.ipynb", Next: "nb3"}
-	t2 := &task{FlowName: "wf1", Name: "nb2", Path: "data/nb2.ipynb", Next: "nb3"}
-	t3 := &task{FlowName: "wf1", Name: "nb3", Path: "data/nb3.ipynb"}
 
-	f := &flow{FlowName: "wf1", Target: "test", Schedule: "* * * * *"}
+	t1 := Task{FlowName: "wf1", Name: "nb1", Path: "data/nb1.ipynb", Next: "nb3"}
+	t2 := Task{FlowName: "wf1", Name: "nb2", Path: "data/nb2.ipynb", Next: "nb3"}
+	t3 := Task{FlowName: "wf1", Name: "nb3", Path: "data/nb3.ipynb"}
+
+	f := &Flow{FlowName: "wf1", Target: "test", Schedule: "* * * * *", Tasks: []Task{t1, t2, t3}}
 
 	db.Create(f)
 	db.Create(t)
-	db.Create(t1)
-	db.Create(t2)
-	db.Create(t3)
 }
 
 func getData() {

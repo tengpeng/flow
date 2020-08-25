@@ -11,17 +11,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type flow struct {
+type Flow struct {
 	gorm.Model
 	FlowName string `gorm:"unique;not null" json:"FlowName"`
 	Target   string `gorm:"not null" json:"Target"`
 	Schedule string `gorm:"not null" json:"Schedule"`
-	Status   string
+	Status   string //used by db
+	Tasks    []Task
 }
 
-type task struct {
+type Task struct {
 	gorm.Model
-	FlowName string `gorm:"not null" json:"FlowName"`
+	FlowID   int
+	FlowName string `gorm:"not null" json:"FlowName"` //TODO: use flowID instead
 	Name     string `gorm:"not null" json:"Name"`
 	Path     string `gorm:"not null" json:"Path"`
 	Next     string `json:"Next"`
@@ -62,13 +64,13 @@ const (
 )
 
 //TODO: refactor
-func (f *flow) start() {
+func (f *Flow) start() {
 	f.generateDep()
 	f.run()
 }
 
-func (f flow) generateDep() {
-	var tasks []task
+func (f Flow) generateDep() {
+	var tasks []Task
 	db.Find(&tasks, "flow_name = ?", f.FlowName)
 
 	for _, t := range tasks {
@@ -79,7 +81,7 @@ func (f flow) generateDep() {
 }
 
 //cron trigger run: flow -> flow run
-func (f *flow) run() {
+func (f *Flow) run() {
 	done := make(chan struct{})
 
 	db.Create(&flowRun{FlowName: f.FlowName, Time: time.Now(), Status: READY})
@@ -97,7 +99,7 @@ func (f *flow) run() {
 
 // task -> taskrun
 func (r *flowRun) setTasks() {
-	var tasks []task
+	var tasks []Task
 	db.Find(&tasks, "flow_name = ?", r.FlowName)
 
 	for _, t := range tasks {

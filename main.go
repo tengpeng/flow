@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -14,10 +15,11 @@ var db *gorm.DB
 func main() {
 	log.Info("Bayesnote flow started")
 
-	//os.Remove("flow.db")
+	os.Remove("flow.db")
 	initDB()
+	setUpTestDB()
 
-	go testForward()
+	//go testForward()
 	//go localTestForward()
 
 	go watchNewFlow()
@@ -28,7 +30,7 @@ func main() {
 
 func watchNewFlow() {
 	for {
-		var f flow
+		var f Flow
 		db.Find(&f, "status = ?", nil)
 		//TODO: update status
 		//add cron trigger
