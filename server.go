@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 )
 
 func server() *gin.Engine {
@@ -19,7 +18,6 @@ func server() *gin.Engine {
 	r.GET("/ping", ping)
 	r.POST("/flows", newFlow)
 	r.GET("/runs", getRuns)
-	r.POST("/runs", newRuns)
 
 	return r
 }
@@ -54,25 +52,4 @@ func getRuns(c *gin.Context) {
 	var runs []flowRun
 	db.Find(&runs)
 	c.JSON(http.StatusOK, runs)
-}
-
-//TODO:
-type flowRuns struct {
-	Runs []flowRun `json:"runs"`
-}
-
-func newRuns(c *gin.Context) {
-	var r flowRuns
-	err := c.BindJSON(&r)
-	if err != nil {
-		log.Error(err)
-	}
-
-	for _, v := range r.Runs {
-		db.Create(&v)
-	}
-	// db.Find(&runs)
-	// c.JSON(200, gin.H{
-	// 	"runs": runs,
-	// })
 }
