@@ -17,7 +17,7 @@ func main() {
 
 	os.Remove("flow.db")
 	initDB()
-	setUpTestDB()
+	//setUpTestDB()
 
 	//go testForward()
 	//go localTestForward()

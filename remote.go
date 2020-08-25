@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -97,12 +96,10 @@ func (r *remote) forward() {
 		}
 
 		go r.connect(localConn)
-		fmt.Println("localConn >")
 	}
 }
 
 func (r *remote) connect(localConn net.Conn) {
-	fmt.Println("conenct")
 	sshConn, err := r.client.Dial("tcp", r.remoteAddr)
 	if err != nil {
 		log.Error(err)

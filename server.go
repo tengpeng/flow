@@ -19,9 +19,16 @@ func server() *gin.Engine {
 	r.POST("/targets", newTarget)
 	r.POST("/targets/:name", newDeployment)
 	r.POST("/flows", newFlow)
+	r.GET("/flows", getFlows) //TODO:
 	r.GET("/runs", getRuns)
 
 	return r
+}
+
+func getFlows(c *gin.Context) {
+	var f Flow
+	db.First(&f, 1)
+	c.JSON(http.StatusOK, f)
 }
 
 func ping(c *gin.Context) {
