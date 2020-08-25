@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -18,23 +20,32 @@ import (
 
 type target struct {
 	gorm.Model
-	Name     string `gorm:"unique;not null"`
-	User     string `gorm:"not null"`
-	IP       string `gorm:"not null"`
-	Password string
-	Pem      string
+	Name     string `gorm:"unique;not null json:"Name"`
+	User     string `gorm:"not null" json:"User"`
+	IP       string `gorm:"not null" json:"IP"`
+	Password string `json:"Password"`
+	Pem      string `json:"Pem"`
 }
 
 type remote struct {
-	client *ssh.Client
-	home   string
+	client     *ssh.Client
+	config     *ssh.ClientConfig
+	serverAddr string
+	localAddr  string
+	remoteAddr string
+	home       string
+	localConn  net.Conn
 }
+
+//deploy to remote
+//dispatch flow
+//get flow run + notebook
 
 //TODO: error handling
 func newRemote(t target) remote {
 	t.checkPort("32772")
 	config := t.newConfig()
-	r := remote{client: t.dial(config)}
+	r := remote{client: t.dial(config), config: config}
 	r.getHome()
 	return r
 }
@@ -59,8 +70,17 @@ func (r remote) deployBinary() {
 	r.runCommand(destPath + " &")
 }
 
-func (r remote) dispatchFlow() {
+func (r remote) dispatchFlow(ID string) {
+	var f flow
+	db.Find(&f, "id = ?", ID)
 
+	byte, err := json.Marshal(f)
+	if err != nil {
+		log.Error(err)
+	}
+
+	dstPath := filepath.Join(r.home, ID)
+	r.copyByte(byte, dstPath)
 }
 
 func (r remote) createDstFile(dstPath string) *sftp.File {
@@ -102,6 +122,21 @@ func (r remote) copyFile(srcPath string, dstPath string) {
 		"dst":   dstPath,
 		"bytes": bytes,
 	}).Info("Copy file ")
+}
+
+func (r remote) copyByte(src []byte, dstPath string) {
+	dstFile := r.createDstFile(dstPath)
+
+	bytes, err := dstFile.ReadFrom(bytes.NewReader(src))
+	if err != nil {
+		log.Error(err, dstPath)
+	}
+	dstFile.Close()
+
+	log.WithFields(logrus.Fields{
+		"dst":   dstPath,
+		"bytes": bytes,
+	}).Info("Copy file OK")
 }
 
 func (r remote) runCommand(cmd string) (string, error) {
@@ -192,6 +227,40 @@ func (t target) dial(config *ssh.ClientConfig) *ssh.Client {
 	return client
 }
 
+func (r remote) forward() {
+	localListener, err := net.Listen("tcp", r.localAddr)
+	if err != nil {
+		log.Fatalf("net.Listen failed: %v", err)
+	}
+
+	for {
+		r.localConn, err = localListener.Accept()
+		if err != nil {
+			log.Fatalf("listen.Accept failed: %v", err)
+		}
+		go r.connect()
+	}
+}
+
+func (r remote) connect() {
+	sshConn, err := r.client.Dial("tcp", r.remoteAddr)
+
+	go func() {
+		_, err = io.Copy(sshConn, r.localConn)
+		if err != nil {
+			log.Fatalf("io.Copy failed: %v", err)
+		}
+	}()
+
+	// Copy sshConn.Reader to localConn.Writer
+	go func() {
+		_, err = io.Copy(r.localConn, sshConn)
+		if err != nil {
+			log.Fatalf("io.Copy failed: %v", err)
+		}
+	}()
+}
+
 func (t target) checkPort(port string) {
 	for i := 0; i < 5; i++ {
 		conn, err := net.DialTimeout("tcp", net.JoinHostPort(t.IP, port), time.Second)
@@ -205,9 +274,3 @@ func (t target) checkPort(port string) {
 		}
 	}
 }
-
-//deploy to remote
-
-//dispatch flow
-
-//get flow run + notebook

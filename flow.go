@@ -13,17 +13,17 @@ import (
 
 type flow struct {
 	gorm.Model
-	FlowName string `gorm:"unique;not null"`
-	Target   string `gorm:"not null"`
-	Schedule string `gorm:"not null"`
+	FlowName string `gorm:"unique;not null" json:"FlowName"`
+	Target   string `gorm:"not null" json:"Target"`
+	Schedule string `gorm:"not null" json:"Schedule"`
 }
 
 type task struct {
 	gorm.Model
-	FlowName string `gorm:"not null"`
-	Name     string `gorm:"not null"`
-	Path     string `gorm:"not null"`
-	Next     string
+	FlowName string `gorm:"not null" json:"FlowName"`
+	Name     string `gorm:"not null" json:"Name"`
+	Path     string `gorm:"not null" json:"Path"`
+	Next     string `json:"Next"`
 }
 
 type dep struct {
@@ -177,6 +177,7 @@ func (t *taskRun) delParent() {
 }
 
 //TODO: refactor
+//TODO: check if jupyter installed
 func (t *taskRun) run() {
 	if t.retryCnt == 0 {
 		t.Status = FAIL
