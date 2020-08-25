@@ -38,8 +38,8 @@ func initialMigration() {
 	db.AutoMigrate(&remote{})
 	db.AutoMigrate(&Task{})
 	db.AutoMigrate(&dep{})
-	db.AutoMigrate(&flowRun{})
-	db.AutoMigrate(&taskRun{})
+	db.AutoMigrate(&FlowRun{})
+	db.AutoMigrate(&TaskRun{})
 }
 
 func setUpTestDB() {

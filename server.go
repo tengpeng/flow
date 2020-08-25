@@ -93,7 +93,7 @@ func getFlows(c *gin.Context) {
 }
 
 func getRuns(c *gin.Context) {
-	var runs []flowRun
+	var runs []FlowRun
 	db.Find(&runs)
 	c.JSON(http.StatusOK, runs)
 }

@@ -33,8 +33,7 @@ func watchNewFlow() {
 	for {
 		var f Flow
 		db.Find(&f, "status = ?", "")
-		//TODO: update status
-		//add cron trigger
+
 		if f.Schedule != "" {
 			db.Model(&f).Update("Status", "STARTED")
 
@@ -43,6 +42,7 @@ func watchNewFlow() {
 			}).Info("Get new flow")
 
 			c := cron.New()
+			c.Start()
 			c.AddFunc(f.Schedule, func() { f.start() })
 
 			log.WithFields(logrus.Fields{

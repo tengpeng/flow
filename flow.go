@@ -36,24 +36,22 @@ type dep struct {
 	Child    string `gorm:"not null"`
 }
 
-type flowRun struct {
+type FlowRun struct {
 	gorm.Model
-	RunID    string `gorm:"default:1;AUTO_INCREMENT"`
 	FlowName string
 	Time     time.Time
 	Status   int
-
-	tasks []taskRun
+	tasks    []TaskRun
 }
 
-type taskRun struct {
-	RunID    string
-	Name     string
-	Path     string
-	Next     string
-	Status   int
-	retryCnt int
-	Notebook string
+type TaskRun struct {
+	FlowRunID string
+	Name      string
+	Path      string
+	Next      string
+	Status    int
+	retryCnt  int
+	Notebook  string
 }
 
 const (
@@ -65,7 +63,7 @@ const (
 
 //TODO: refactor
 func (f *Flow) start() {
-	f.generateDep()
+	f.generateDep() //TODO: not necessary if no change in Flow
 	f.run()
 }
 
@@ -84,13 +82,13 @@ func (f Flow) generateDep() {
 func (f *Flow) run() {
 	done := make(chan struct{})
 
-	db.Create(&flowRun{FlowName: f.FlowName, Time: time.Now(), Status: READY})
+	db.Create(&FlowRun{FlowName: f.FlowName, Time: time.Now(), Status: READY})
 	log.Info("Flow run created")
 
-	var r flowRun
+	var r FlowRun
 	db.First(&r, "status = ?", READY)
 
-	r.setTasks()
+	r.setTasks() //Move this
 	r.start()
 	go r.status(done)
 
@@ -98,12 +96,12 @@ func (f *Flow) run() {
 }
 
 // task -> taskrun
-func (r *flowRun) setTasks() {
+func (r *FlowRun) setTasks() {
 	var tasks []Task
 	db.Find(&tasks, "flow_name = ?", r.FlowName)
 
 	for _, t := range tasks {
-		tr := taskRun{RunID: r.RunID, Name: t.Name, Path: t.Path, Next: t.Next, retryCnt: 2, Status: READY}
+		tr := TaskRun{Name: t.Name, Path: t.Path, Next: t.Next, retryCnt: 2, Status: READY}
 		r.tasks = append(r.tasks, tr)
 		db.Create(&tr)
 	}
@@ -111,17 +109,17 @@ func (r *flowRun) setTasks() {
 	log.Info("Flow tasks set")
 }
 
-func (r *flowRun) start() {
+func (r *FlowRun) start() {
 	db.Model(r).Update("Status", RUNNING)
+	log.Info("Flow running")
+
 	for i := range r.tasks {
 		r.tasks[i].start()
 	}
-
-	log.Info("Flow run started")
 }
 
 //TODO: tests
-func (r *flowRun) status(done chan struct{}) {
+func (r *FlowRun) status(done chan struct{}) {
 out:
 	for {
 		for _, t := range r.tasks {
@@ -146,7 +144,7 @@ out:
 	done <- struct{}{}
 }
 
-func (r flowRun) done() bool {
+func (r FlowRun) done() bool {
 	for _, t := range r.tasks {
 		if t.Status == READY || t.Status == RUNNING {
 			return false
@@ -155,7 +153,7 @@ func (r flowRun) done() bool {
 	return true
 }
 
-func (t *taskRun) start() {
+func (t *TaskRun) start() {
 	t.Status = READY
 	db.Model(t).Update("Status", READY)
 
@@ -168,7 +166,7 @@ func (t *taskRun) start() {
 	}
 }
 
-func (t taskRun) checkParent() bool {
+func (t TaskRun) checkParent() bool {
 	var deps []dep
 	db.Find(&deps, "child = ?", t.Name)
 	if len(deps) == 0 {
@@ -177,7 +175,7 @@ func (t taskRun) checkParent() bool {
 	return false
 }
 
-func (t *taskRun) delParent() {
+func (t *TaskRun) delParent() {
 	var deps []dep
 	db.Find(&deps, "parent = ?", t.Name)
 	db.Delete(&deps)
@@ -185,7 +183,7 @@ func (t *taskRun) delParent() {
 
 //TODO: refactor
 //TODO: check if jupyter installed
-func (t *taskRun) run() {
+func (t *TaskRun) run() {
 	if t.retryCnt == 0 {
 		t.Status = FAIL
 		db.Model(t).Update("status", FAIL)
@@ -194,7 +192,7 @@ func (t *taskRun) run() {
 
 	t.retryCnt--
 	t.Status = RUNNING
-	db.Model(t).Update("status", RUNNING)
+	db.Model(t).Update("status", RUNNING) //TODO: failed ?
 
 	out := "temp" + "-" + t.Name
 	oPath := filepath.Join("data", out+".ipynb")
