@@ -19,7 +19,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-type target struct {
+type Target struct {
 	gorm.Model
 	Name     string `gorm:"unique;not null" json:"Name"`
 	User     string `gorm:"not null" json:"User"`
@@ -28,21 +28,22 @@ type target struct {
 	Pem      string `json:"Pem"`
 }
 
-type remote struct {
+type Remote struct {
 	gorm.Model
+	TargetID   uint
 	Name       string `gorm:"unique;not null"`
-	serverAddr string `gorm:"not null"`
-	localAddr  string `gorm:"not null"`
-	remoteAddr string `gorm:"not null"`
-	remoteHome string `gorm:"not null"`
+	ServerAddr string `gorm:"not null"`
+	LocalAddr  string `gorm:"not null"`
+	RemoteAddr string `gorm:"not null"`
 
-	client *ssh.Client
-	config *ssh.ClientConfig
+	remoteHome string
+	client     *ssh.Client
+	config     *ssh.ClientConfig
 }
 
 //TODO: SSH error
-func (t target) isSSHOK() error {
-	err := t.checkPort("32772")
+func (t Target) isSSHOK() error {
+	err := t.checkPort("32768")
 	if err != nil {
 		return err
 	}
@@ -57,20 +58,20 @@ func (t target) isSSHOK() error {
 
 //TODO: check jupyter installation
 //TODO: error handling
-func newRemote(t target) remote {
+func newRemote(t Target) Remote {
 	config := t.newConfig()
 	client, err := t.dial(config)
 	if err != nil {
 		log.Error(err)
 	}
 
-	r := remote{client: client, config: config}
+	r := Remote{TargetID: t.ID, Name: t.Name, client: client, config: config}
 
 	r.getHome()
 
-	r.serverAddr = t.IP + ":22"
-	r.localAddr = "0.0.0.0:8000"  //TODO: getFreePort()
-	r.remoteAddr = "0.0.0.0:9000" //TODO: getFreePort()
+	r.ServerAddr = t.IP + ":22"
+	r.LocalAddr = "0.0.0.0:8000"  //TODO: getFreePort()
+	r.RemoteAddr = "0.0.0.0:9000" //TODO: getFreePort()
 
 	go r.forward()
 	db.Create(&r)
@@ -79,20 +80,31 @@ func newRemote(t target) remote {
 
 //TODO: websocket
 
-func (r remote) deployBinary() {
+func (r Remote) deployBinary() {
 	fileName := "flow"
 	srcPath := filepath.Join(".", fileName)
 	destPath := filepath.Join(r.remoteHome, fileName)
 
+	r.isJupyterOK()
 	//TODO: stop run
 	r.runCommand("rm "+destPath, false)
 	//TODO: progress bar
 	r.copyFile(srcPath, destPath)
+	//TODO: tests
 	r.runCommand(destPath, true)
 	//TODO: check if running
 }
 
-func (r *remote) getHome() {
+func (r Remote) isJupyterOK() {
+	_, err := r.runCommand("jupyter --version", false)
+	if err != nil {
+		log.Error("Jupyter is not installed")
+		return
+	}
+	log.Info("Jupyter OK")
+}
+
+func (r *Remote) getHome() {
 	homeDir, err := r.runCommand("eval echo ~$USER", false)
 	if err != nil {
 		log.Error(err)
@@ -101,8 +113,8 @@ func (r *remote) getHome() {
 	log.Info("Remote home dir: ", homeDir)
 }
 
-func (r *remote) forward() {
-	localListener, err := net.Listen("tcp", r.localAddr)
+func (r *Remote) forward() {
+	localListener, err := net.Listen("tcp", r.LocalAddr)
 	if err != nil {
 		log.Fatalf("net.Listen failed: %v", err)
 	}
@@ -117,8 +129,8 @@ func (r *remote) forward() {
 	}
 }
 
-func (r *remote) connect(localConn net.Conn) {
-	sshConn, err := r.client.Dial("tcp", r.remoteAddr)
+func (r *Remote) connect(localConn net.Conn) {
+	sshConn, err := r.client.Dial("tcp", r.RemoteAddr)
 	if err != nil {
 		log.Error(err)
 	}
@@ -138,7 +150,7 @@ func (r *remote) connect(localConn net.Conn) {
 	}()
 }
 
-func (r remote) createDstFile(dstPath string) *sftp.File {
+func (r Remote) createDstFile(dstPath string) *sftp.File {
 	sftp, err := sftp.NewClient(r.client)
 	if err != nil {
 		log.Error(err)
@@ -157,7 +169,7 @@ func (r remote) createDstFile(dstPath string) *sftp.File {
 }
 
 //TODO: compare size of files
-func (r remote) copyFile(srcPath string, dstPath string) {
+func (r Remote) copyFile(srcPath string, dstPath string) {
 	dstFile := r.createDstFile(dstPath)
 
 	srcFile, err := os.Open(srcPath)
@@ -184,7 +196,7 @@ func (r remote) copyFile(srcPath string, dstPath string) {
 	}).Info("Copy file ")
 }
 
-func (r remote) runCommand(cmd string, start bool) (string, error) {
+func (r Remote) runCommand(cmd string, start bool) (string, error) {
 	session, err := r.client.NewSession()
 	if err != nil {
 		log.Error(err)
@@ -216,7 +228,7 @@ func (r remote) runCommand(cmd string, start bool) (string, error) {
 	return strings.TrimSuffix(b.String(), "\n"), err
 }
 
-func (t target) newClientPemConfig() *ssh.ClientConfig {
+func (t Target) newClientPemConfig() *ssh.ClientConfig {
 	//TODO: Check permission 400
 
 	pemBytes, err := ioutil.ReadFile(t.Pem)
@@ -240,7 +252,7 @@ func (t target) newClientPemConfig() *ssh.ClientConfig {
 	return config
 }
 
-func (t target) newClientPasswordConfig() *ssh.ClientConfig {
+func (t Target) newClientPasswordConfig() *ssh.ClientConfig {
 	config := &ssh.ClientConfig{
 		User: t.User,
 		Auth: []ssh.AuthMethod{
@@ -253,7 +265,7 @@ func (t target) newClientPasswordConfig() *ssh.ClientConfig {
 	return config
 }
 
-func (t target) newConfig() *ssh.ClientConfig {
+func (t Target) newConfig() *ssh.ClientConfig {
 	var config *ssh.ClientConfig
 	if len(t.Pem) > 0 {
 		config = t.newClientPemConfig()
@@ -263,8 +275,8 @@ func (t target) newConfig() *ssh.ClientConfig {
 	return config
 }
 
-func (t target) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
-	client, err := ssh.Dial("tcp", t.IP+":"+"32772", config)
+func (t Target) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
+	client, err := ssh.Dial("tcp", t.IP+":"+"32768", config)
 	if err != nil {
 		log.Error(err, t.IP, config.Config)
 		return nil, errors.New("SSH failed")
@@ -274,7 +286,7 @@ func (t target) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
 	return client, nil
 }
 
-func (t target) checkPort(port string) error {
+func (t Target) checkPort(port string) error {
 	for i := 0; i < 5; i++ {
 		time.Sleep(time.Second)
 		conn, err := net.DialTimeout("tcp", net.JoinHostPort(t.IP, port), time.Second)

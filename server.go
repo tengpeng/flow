@@ -16,12 +16,24 @@ func server() *gin.Engine {
 	}))
 
 	r.GET("/ping", ping)
+
 	r.POST("/targets", newTarget)
+
 	r.POST("/flows", newFlow)
 	r.GET("/flows", getFlows) //TODO:
+
 	r.GET("/runs", getRuns)
 
+	r.GET("/sync", sync)
+
 	return r
+}
+
+func sync(c *gin.Context) {
+	c.Header("Connection", "keep-alive")
+	var frs []FlowRun
+	db.Find(&frs)
+	c.JSON(http.StatusOK, frs)
 }
 
 func ping(c *gin.Context) {
@@ -31,7 +43,7 @@ func ping(c *gin.Context) {
 }
 
 func newTarget(c *gin.Context) {
-	var t target
+	var t Target
 	err := c.BindJSON(&t)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

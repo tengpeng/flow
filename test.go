@@ -14,7 +14,7 @@ func startFlowRun() {
 }
 
 func deploy() {
-	t := target{Name: "test", User: "root", Password: "z", IP: "0.0.0.0"}
+	t := Target{Name: "test", User: "root", Password: "z", IP: "0.0.0.0"}
 	r := newRemote(t)
 	r.deployBinary()
 }
@@ -30,24 +30,24 @@ func exportFlow() {
 }
 
 func testForward() {
-	t := target{Name: "aws", User: "ubuntu", Pem: "/Users/pt/Downloads/hk.pem", IP: "ec2-18-166-71-228.ap-east-1.compute.amazonaws.com"}
+	t := Target{Name: "aws", User: "ubuntu", Pem: "/Users/pt/Downloads/hk.pem", IP: "ec2-18-166-71-228.ap-east-1.compute.amazonaws.com"}
 	r := newRemote(t)
 
-	r.serverAddr = "ec2-18-166-71-228.ap-east-1.compute.amazonaws.com:22"
-	r.localAddr = "localhost:8000"
-	r.remoteAddr = "localhost:9000"
+	r.ServerAddr = "ec2-18-166-71-228.ap-east-1.compute.amazonaws.com:22"
+	r.LocalAddr = "localhost:8000"
+	r.RemoteAddr = "localhost:9000"
 
 	log.Info("forwarding")
 	r.forward()
 }
 
 func localTestForward() {
-	t := target{Name: "test", User: "root", Password: "z", IP: "0.0.0.0"}
+	t := Target{Name: "test", User: "root", Password: "z", IP: "0.0.0.0"}
 	r := newRemote(t)
 
-	r.localAddr = "0.0.0.0:8000"
-	r.remoteAddr = "0.0.0.0:9000"
-	r.serverAddr = "0.0.0.0:22"
+	r.LocalAddr = "0.0.0.0:8000"
+	r.RemoteAddr = "0.0.0.0:9000"
+	r.ServerAddr = "0.0.0.0:22"
 
 	log.Info("forwarding")
 

@@ -15,7 +15,8 @@ import (
 type Flow struct {
 	gorm.Model
 	FlowName string `gorm:"unique;not null" json:"FlowName"`
-	Target   string `gorm:"not null" json:"Target"`
+	TargetID uint
+	// Target   string `gorm:"not null" json:"Target"`
 	Schedule string `gorm:"not null" json:"Schedule"`
 	Status   string //used by db
 	Tasks    []Task
@@ -41,6 +42,7 @@ type dep struct {
 type FlowRun struct {
 	gorm.Model
 	FlowID   uint
+	TargetID uint //TODO
 	FlowName string
 	Time     time.Time
 	Status   int
@@ -67,7 +69,7 @@ func (f *Flow) run() {
 	done := make(chan struct{})
 
 	//create flow run
-	db.Create(&FlowRun{FlowID: f.ID, FlowName: f.FlowName, Time: time.Now(), Status: READY})
+	db.Create(&FlowRun{FlowID: f.ID, TargetID: f.TargetID, FlowName: f.FlowName, Time: time.Now(), Status: READY})
 	log.Info("Flow run created")
 
 	//get flow run
@@ -212,6 +214,7 @@ func (t *TaskRun) run() {
 	t.delParent()
 }
 
+//TODO: add all existing flows to cron
 func watchNewFlow() {
 	for {
 		var f Flow

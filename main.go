@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 
 	"github.com/jinzhu/gorm"
@@ -11,27 +12,22 @@ import (
 var db *gorm.DB
 
 //TODO: remove fatal
+//TODO: when to create new remote
 func main() {
-	log.Info("Bayesnote flow started")
+	useWorker := flag.Bool("worker", false, "Start remote worker")
+	flag.Parse()
 
 	os.Remove("flow.db")
 	initDB()
-	//setUpTestDB()
-
-	//go testForward()
-	//go localTestForward()
-
 	go watchNewFlow()
+
+	if *useWorker {
+		log.Info("Bayesnote flow worker started")
+	} else {
+		log.Info("Bayesnote flow core started")
+		go pollData()
+	}
 
 	r := server()
 	r.Run(":9000")
 }
-
-/*
-	os.Remove("flow.db")
-	setUpTestDB()
-	testFlow()
-	cronTrigger()
-	deploy()
-	testForward()
-*/
