@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
@@ -23,7 +24,7 @@ type Flow struct {
 type Task struct {
 	gorm.Model
 	FlowID   uint
-	FlowName string `gorm:"not null" json:"FlowName"` //TODO: use flowID instead
+	FlowName string `gorm:"not null" json:"FlowName"`
 	Name     string `gorm:"not null" json:"Name"`
 	Path     string `gorm:"not null" json:"Path"`
 	Next     string `json:"Next"`
@@ -31,9 +32,10 @@ type Task struct {
 
 type dep struct {
 	gorm.Model
-	FlowName string `gorm:"not null"`
-	Parent   string `gorm:"not null"`
-	Child    string `gorm:"not null"`
+	FlowRunID uint
+	FlowName  string `gorm:"not null"`
+	Parent    string `gorm:"not null"`
+	Child     string `gorm:"not null"`
 }
 
 type FlowRun struct {
@@ -61,40 +63,27 @@ const (
 	FAIL
 )
 
-//TODO: refactor
-func (f *Flow) start() {
-	f.generateDep() //TODO: not necessary if no change in Flow
-	f.run()
-}
-
-func (f Flow) generateDep() {
-	var tasks []Task
-	db.Find(&tasks, "flow_name = ?", f.FlowName)
-
-	for _, t := range tasks {
-		if len(t.Next) > 0 {
-			db.Create(&dep{FlowName: t.FlowName, Parent: t.Name, Child: t.Next})
-		}
-	}
-}
-
-//cron trigger run: flow -> flow run
 func (f *Flow) run() {
 	done := make(chan struct{})
 
+	//create flow run
 	db.Create(&FlowRun{FlowID: f.ID, FlowName: f.FlowName, Time: time.Now(), Status: READY})
 	log.Info("Flow run created")
 
+	//get flow run
 	var r FlowRun
 	db.First(&r, "status = ?", READY)
 
+	//get tasks for flow run
 	var tasks []Task
 	db.Find(&tasks, "flow_id = ?", f.ID)
 	r.setTasks(tasks) //Move this
 
+	//start
 	go r.start()
 	go r.status(done)
 
+	//exist
 	<-done
 }
 
@@ -104,6 +93,11 @@ func (r *FlowRun) setTasks(tasks []Task) {
 		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, runCnt: 2, Status: READY}
 		r.tasks = append(r.tasks, tr)
 		db.Create(&tr)
+
+		//generate dep
+		if len(t.Next) > 0 {
+			db.Create(&dep{FlowRunID: r.ID, FlowName: t.FlowName, Parent: t.Name, Child: t.Next})
+		}
 	}
 
 	log.Info("Flow tasks set")
@@ -125,7 +119,7 @@ out:
 		for i := range r.tasks {
 			if r.tasks[i].Status == FAIL {
 				db.Model(r).Update("Status", FAIL)
-				log.Info("Flow run Failed")
+				log.Info("Flow run failed")
 				break out
 			}
 		}
@@ -163,10 +157,9 @@ func (t *TaskRun) start() {
 	}
 }
 
-//TODO: ID
 func (t TaskRun) checkParent() bool {
 	var deps []dep
-	db.Find(&deps, "child = ?", t.Name)
+	db.Find(&deps, "flow_run_id = ? and child = ?", t.FlowRunID, t.Name)
 	if len(deps) == 0 {
 		return true
 	}
@@ -175,7 +168,7 @@ func (t TaskRun) checkParent() bool {
 
 func (t *TaskRun) delParent() {
 	var deps []dep
-	db.Find(&deps, "parent = ?", t.Name)
+	db.Find(&deps, "flow_run_id = ? and parent = ?", t.FlowRunID, t.Name)
 	db.Delete(&deps)
 }
 
@@ -197,7 +190,7 @@ func (t *TaskRun) run() {
 
 	out := "temp" + "-" + t.Name
 	oPath := filepath.Join("data", out+".ipynb")
-	cmd := exec.Command("x", "nbconvert", "--to", "notebook",
+	cmd := exec.Command("jupyter", "nbconvert", "--to", "notebook",
 		"--output", out, "--execute", t.Path, "--ExecutePreprocessor.timeout=3600")
 	err := cmd.Run()
 	if err != nil {
@@ -218,4 +211,28 @@ func (t *TaskRun) run() {
 
 	db.Model(t).Update("status", OK, "notebook", string(notebook))
 	t.delParent()
+}
+
+func watchNewFlow() {
+	for {
+		var f Flow
+		db.Find(&f, "status = ?", "")
+
+		if f.Schedule != "" {
+			db.Model(&f).Update("Status", "STARTED")
+
+			log.WithFields(logrus.Fields{
+				"flow": f.FlowName,
+			}).Info("Get new flow")
+
+			c := cron.New()
+			c.Start()
+			c.AddFunc(f.Schedule, func() { f.run() })
+
+			log.WithFields(logrus.Fields{
+				"schedule": f.Schedule,
+			}).Info("Add cron job")
+		}
+		time.Sleep(time.Second)
+	}
 }

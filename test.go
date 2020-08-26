@@ -10,7 +10,6 @@ import (
 func startFlowRun() {
 	var f Flow
 	db.First(&f, 1)
-	f.generateDep()
 	f.run()
 }
 

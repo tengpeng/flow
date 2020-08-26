@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/jinzhu/gorm"
-	log "github.com/sirupsen/logrus"
 )
 
 func initDB() {
@@ -53,20 +51,4 @@ func setUpTestDB() {
 
 	db.Create(f)
 	db.Create(t)
-}
-
-func getData() {
-	resp, err := http.Get("")
-	if err != nil {
-		log.Error(err)
-	}
-
-	if resp.StatusCode != 200 {
-		log.Error("x 200")
-	}
-
-	resp, err = http.Post("", "", resp.Body)
-	if err != nil {
-		log.Error(err)
-	}
 }
