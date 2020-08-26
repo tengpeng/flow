@@ -83,6 +83,7 @@ func pollData() {
 				continue
 			}
 
+			//TODO: handle empty return
 			var frs []FlowRun
 			err = json.Unmarshal(b, &frs)
 			if err != nil {
@@ -91,10 +92,8 @@ func pollData() {
 			}
 
 			if len(frs) > 0 {
-				// var flowRuns []FlowRun
-				// db.Delete(&flowRuns, "target_id = ?", t.TargetID)
 				for _, v := range frs {
-					// log.Println(v)
+					log.Println(v)
 					err := db.Create(&v).Error
 					if err != nil {
 						log.Error(err)

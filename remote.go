@@ -74,7 +74,7 @@ func newRemote(t Target) Remote {
 	r.RemoteAddr = "0.0.0.0:9000" //TODO: getFreePort()
 
 	go r.forward()
-	//	db.Create(&r)
+	db.Create(&r)
 	return r
 }
 
