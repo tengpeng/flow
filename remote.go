@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net"
@@ -20,14 +21,13 @@ import (
 
 type target struct {
 	gorm.Model
-	Name     string `gorm:"unique;not null json:"Name"`
+	Name     string `gorm:"unique;not null" json:"Name"`
 	User     string `gorm:"not null" json:"User"`
 	IP       string `gorm:"not null" json:"IP"`
-	Password string `json:"Password"`
+	Password string `json:"Password"` //TODO: Add check constraint
 	Pem      string `json:"Pem"`
 }
 
-//TODO: uniqueness
 type remote struct {
 	gorm.Model
 	Name       string `gorm:"unique;not null"`
@@ -40,38 +40,56 @@ type remote struct {
 	config *ssh.ClientConfig
 }
 
+//TODO: SSH error
+func (t target) isSSHOK() error {
+	err := t.checkPort("32772")
+	if err != nil {
+		return err
+	}
+
+	config := t.newConfig()
+	_, err = t.dial(config)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 //TODO: check jupyter installation
 //TODO: error handling
 func newRemote(t target) remote {
-	t.checkPort("22")
-
 	config := t.newConfig()
-	r := remote{client: t.dial(config), config: config}
+	client, err := t.dial(config)
+	if err != nil {
+		log.Error(err)
+	}
 
-	//r.getHome()
+	r := remote{client: client, config: config}
 
-	// r.serverAddr = t.IP + ":22"
-	// r.localAddr = "8000"  //getFreePort()
-	// r.remoteAddr = "9000" //TODO
+	r.getHome()
 
-	// go r.forward()
+	r.serverAddr = t.IP + ":22"
+	r.localAddr = "0.0.0.0:8000"  //TODO: getFreePort()
+	r.remoteAddr = "0.0.0.0:9000" //TODO: getFreePort()
 
-	// db.Create(&r)
+	go r.forward()
+	db.Create(&r)
 	return r
 }
 
-//TODO: stop run
-//TODO: progress bar
 //TODO: websocket
-//TODO: check if running
+
 func (r remote) deployBinary() {
 	fileName := "flow"
 	srcPath := filepath.Join(".", fileName)
 	destPath := filepath.Join(r.remoteHome, fileName)
 
+	//TODO: stop run
 	r.runCommand("rm " + destPath)
+	//TODO: progress bar
 	r.copyFile(srcPath, destPath)
 	r.runCommand(destPath + " &")
+	//TODO: check if running
 }
 
 func (r *remote) getHome() {
@@ -152,7 +170,7 @@ func (r remote) copyFile(srcPath string, dstPath string) {
 		log.Error(err, srcPath, dstPath)
 	}
 
-	err = dstFile.Chmod(777) //TODO
+	err = dstFile.Chmod(0755)
 	if err != nil {
 		log.Error(err)
 	}
@@ -241,17 +259,18 @@ func (t target) newConfig() *ssh.ClientConfig {
 	return config
 }
 
-func (t target) dial(config *ssh.ClientConfig) *ssh.Client {
-	client, err := ssh.Dial("tcp", t.IP+":"+"22", config)
+func (t target) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
+	client, err := ssh.Dial("tcp", t.IP+":"+"32772", config)
 	if err != nil {
 		log.Error(err, t.IP, config.Config)
+		return nil, errors.New("SSH failed")
 	} else {
 		log.Info("SSH connected: ", t.IP)
 	}
-	return client
+	return client, nil
 }
 
-func (t target) checkPort(port string) {
+func (t target) checkPort(port string) error {
 	for i := 0; i < 5; i++ {
 		time.Sleep(time.Second)
 		conn, err := net.DialTimeout("tcp", net.JoinHostPort(t.IP, port), time.Second)
@@ -260,9 +279,10 @@ func (t target) checkPort(port string) {
 		} else {
 			defer conn.Close()
 			log.Info("Opened ", net.JoinHostPort(t.IP, port))
-			break
+			return nil
 		}
 	}
+	return errors.New("Port 22 is not OK")
 }
 
 func getFreePort() string {

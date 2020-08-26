@@ -173,7 +173,6 @@ func (t *TaskRun) delParent() {
 }
 
 //TODO: refactor
-//TODO: check if jupyter installed
 func (t *TaskRun) run() {
 	if t.runCnt == 0 {
 		t.Status = FAIL
@@ -186,7 +185,7 @@ func (t *TaskRun) run() {
 
 	t.runCnt--
 	t.Status = RUNNING
-	db.Model(t).Update("status", RUNNING) //TODO: failed ?
+	db.Model(t).Update("status", RUNNING)
 
 	out := "temp" + "-" + t.Name
 	oPath := filepath.Join("data", out+".ipynb")

@@ -10,6 +10,7 @@ import (
 
 var db *gorm.DB
 
+//TODO: remove fatal
 func main() {
 	log.Info("Bayesnote flow started")
 
