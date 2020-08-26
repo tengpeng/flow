@@ -63,14 +63,18 @@ func newTarget(c *gin.Context) {
 		return
 	}
 
+	t.ServerAddr = t.IP + ":22"
+	t.LocalAddr = "0.0.0.0:8000"
+	t.RemoteAddr = "0.0.0.0:9000"
+
 	err = db.Create(&t).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	r := newRemote(t)
-	r.deployBinary()
+	// r := newRemote(t)
+	// r.deployBinary()
 
 	c.JSON(200, gin.H{
 		"message": "New target created",

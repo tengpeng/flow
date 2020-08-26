@@ -21,24 +21,19 @@ import (
 
 type Target struct {
 	gorm.Model
-	Name     string `gorm:"unique;not null" json:"Name"`
-	User     string `gorm:"not null" json:"User"`
-	IP       string `gorm:"not null" json:"IP"`
-	Password string `json:"Password"` //TODO: Add check constraint
-	Pem      string `json:"Pem"`
-}
-
-type Remote struct {
-	gorm.Model
-	TargetID   uint
-	Name       string `gorm:"unique;not null"`
+	Name       string `gorm:"unique;not null" json:"Name"`
+	User       string `gorm:"not null" json:"User"`
+	IP         string `gorm:"not null" json:"IP"`
+	Password   string `json:"Password"` //TODO: Add check constraint
+	Pem        string `json:"Pem"`
 	ServerAddr string `gorm:"not null"`
 	LocalAddr  string `gorm:"not null"`
 	RemoteAddr string `gorm:"not null"`
+	RemoteHome string
+	Forwarded  bool
 
-	remoteHome string
-	client     *ssh.Client
-	config     *ssh.ClientConfig
+	client *ssh.Client
+	config *ssh.ClientConfig
 }
 
 //TODO: SSH error
@@ -56,34 +51,41 @@ func (t Target) isSSHOK() error {
 	return nil
 }
 
-//TODO: check jupyter installation
-//TODO: error handling
-func newRemote(t Target) Remote {
+func (t *Target) connect() {
 	config := t.newConfig()
-	client, err := t.dial(config)
+	var err error
+	t.client, err = t.dial(config)
 	if err != nil {
 		log.Error(err)
 	}
+}
 
-	r := Remote{TargetID: t.ID, Name: t.Name, client: client, config: config}
+//TODO: check jupyter installation
+//TODO: error handling
+// func newRemote(t Target) {
+// 	config := t.newConfig()
+// 	client, err := t.dial(config)
+// 	if err != nil {
+// 		log.Error(err)
+// 	}
 
-	r.getHome()
+// 	// r := Remote{TargetID: t.ID, Name: t.Name, ServerAddr: t.IP + ":22", LocalAddr: "0.0.0.0:8000", RemoteAddr: "0.0.0.0:9000", client: client}
+// 	t.getHome()
+// 	db.Model(r).Update("Status", RUNNING)
+// 	return &r
+// }
 
-	r.ServerAddr = t.IP + ":22"
-	r.LocalAddr = "0.0.0.0:8000"  //TODO: getFreePort()
-	r.RemoteAddr = "0.0.0.0:9000" //TODO: getFreePort()
-
+func (r *Target) Forward() {
+	r.connect()
 	go r.forward()
-	db.Create(&r)
-	return r
 }
 
 //TODO: websocket
 
-func (r Remote) deployBinary() {
+func (r *Target) deployBinary() {
 	fileName := "flow"
 	srcPath := filepath.Join(".", fileName)
-	destPath := filepath.Join(r.remoteHome, fileName)
+	destPath := filepath.Join(r.RemoteHome, fileName)
 
 	r.isJupyterOK()
 	//TODO: stop run
@@ -95,7 +97,7 @@ func (r Remote) deployBinary() {
 	//TODO: check if running
 }
 
-func (r Remote) isJupyterOK() {
+func (r *Target) isJupyterOK() {
 	_, err := r.runCommand("jupyter --version", false)
 	if err != nil {
 		log.Error("Jupyter is not installed")
@@ -104,16 +106,16 @@ func (r Remote) isJupyterOK() {
 	log.Info("Jupyter OK")
 }
 
-func (r *Remote) getHome() {
+func (r *Target) getHome() {
 	homeDir, err := r.runCommand("eval echo ~$USER", false)
 	if err != nil {
 		log.Error(err)
 	}
-	r.remoteHome = filepath.Join(homeDir)
+	r.RemoteHome = filepath.Join(homeDir)
 	log.Info("Remote home dir: ", homeDir)
 }
 
-func (r *Remote) forward() {
+func (r *Target) forward() {
 	localListener, err := net.Listen("tcp", r.LocalAddr)
 	if err != nil {
 		log.Fatalf("net.Listen failed: %v", err)
@@ -125,11 +127,11 @@ func (r *Remote) forward() {
 			log.Fatalf("listen.Accept failed: %v", err)
 		}
 
-		go r.connect(localConn)
+		go r.copy(localConn)
 	}
 }
 
-func (r *Remote) connect(localConn net.Conn) {
+func (r *Target) copy(localConn net.Conn) {
 	sshConn, err := r.client.Dial("tcp", r.RemoteAddr)
 	if err != nil {
 		log.Error(err)
@@ -150,7 +152,7 @@ func (r *Remote) connect(localConn net.Conn) {
 	}()
 }
 
-func (r Remote) createDstFile(dstPath string) *sftp.File {
+func (r *Target) createDstFile(dstPath string) *sftp.File {
 	sftp, err := sftp.NewClient(r.client)
 	if err != nil {
 		log.Error(err)
@@ -169,7 +171,7 @@ func (r Remote) createDstFile(dstPath string) *sftp.File {
 }
 
 //TODO: compare size of files
-func (r Remote) copyFile(srcPath string, dstPath string) {
+func (r *Target) copyFile(srcPath string, dstPath string) {
 	dstFile := r.createDstFile(dstPath)
 
 	srcFile, err := os.Open(srcPath)
@@ -196,7 +198,7 @@ func (r Remote) copyFile(srcPath string, dstPath string) {
 	}).Info("Copy file ")
 }
 
-func (r Remote) runCommand(cmd string, start bool) (string, error) {
+func (r *Target) runCommand(cmd string, start bool) (string, error) {
 	session, err := r.client.NewSession()
 	if err != nil {
 		log.Error(err)

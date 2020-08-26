@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"os"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -16,23 +18,34 @@ func main() {
 	useWorker := flag.Bool("worker", false, "Start remote worker")
 	flag.Parse()
 
-	//os.Remove("flow.db")
+	os.Remove("flow.db")
 	initDB()
 	go watchNewFlow()
 
 	if *useWorker {
 		log.Info("Bayesnote flow worker started")
 	} else {
-		var ts []Target
-		db.Find(&ts)
-		for _, t := range ts {
-			newRemote(t)
-		}
-
-		log.Info("Bayesnote flow core started")
+		go Forward()
 		go pollData()
+		log.Info("Bayesnote flow core started")
 	}
 
 	r := server()
 	r.Run(":9000")
+}
+
+func Forward() {
+	//set all forward to false
+	var ts []Target
+	db.Model(ts).Update("Forwarded", false)
+
+	for {
+		var ts []Target
+		db.Find(&ts, "Forwarded = ?", false)
+		for _, t := range ts {
+			t.Forward()
+			db.Model(t).Update("Forwarded", true)
+		}
+		time.Sleep(time.Second)
+	}
 }

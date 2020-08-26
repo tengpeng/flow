@@ -42,7 +42,7 @@ func initialMigration() {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&Flow{}, &Target{}, &Remote{}, &Task{}, &dep{}, FlowRun{}, &TaskRun{})
+	db.AutoMigrate(&Flow{}, &Target{}, &Task{}, &dep{}, FlowRun{}, &TaskRun{})
 }
 
 // func setUpTestDB() {
@@ -61,7 +61,7 @@ func initialMigration() {
 //different entry point
 func pollData() {
 	for {
-		var rs []Remote
+		var rs []Target
 		err := db.Find(&rs).Error
 		if err != nil {
 			log.Error(err)
