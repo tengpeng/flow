@@ -85,15 +85,15 @@ func (r remote) deployBinary() {
 	destPath := filepath.Join(r.remoteHome, fileName)
 
 	//TODO: stop run
-	r.runCommand("rm " + destPath)
+	r.runCommand("rm "+destPath, false)
 	//TODO: progress bar
 	r.copyFile(srcPath, destPath)
-	r.runCommand(destPath + " &")
+	r.runCommand(destPath, true)
 	//TODO: check if running
 }
 
 func (r *remote) getHome() {
-	homeDir, err := r.runCommand("eval echo ~$USER")
+	homeDir, err := r.runCommand("eval echo ~$USER", false)
 	if err != nil {
 		log.Error(err)
 	}
@@ -184,7 +184,7 @@ func (r remote) copyFile(srcPath string, dstPath string) {
 	}).Info("Copy file ")
 }
 
-func (r remote) runCommand(cmd string) (string, error) {
+func (r remote) runCommand(cmd string, start bool) (string, error) {
 	session, err := r.client.NewSession()
 	if err != nil {
 		log.Error(err)
@@ -194,7 +194,11 @@ func (r remote) runCommand(cmd string) (string, error) {
 	var b bytes.Buffer
 	session.Stdout = &b
 
-	err = session.Run(cmd)
+	if !start {
+		err = session.Run(cmd)
+	} else {
+		err = session.Start(cmd)
+	}
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"cmd": cmd,
