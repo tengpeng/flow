@@ -32,8 +32,15 @@ func server() *gin.Engine {
 func sync(c *gin.Context) {
 	c.Header("Connection", "keep-alive")
 	var frs []FlowRun
-	db.Find(&frs)
-	c.JSON(http.StatusOK, frs)
+	db.Find(&frs, "polled = ?", false)
+	db.Model(frs).Update("polled", true)
+	if len(frs) > 0 {
+		c.JSON(http.StatusOK, frs)
+	} else {
+		//TODO:
+		return
+	}
+
 }
 
 func ping(c *gin.Context) {

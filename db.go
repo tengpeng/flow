@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -40,27 +42,21 @@ func initialMigration() {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&Flow{})
-	db.AutoMigrate(&Target{})
-	db.AutoMigrate(&Remote{})
-	db.AutoMigrate(&Task{})
-	db.AutoMigrate(&dep{})
-	db.AutoMigrate(&FlowRun{})
-	db.AutoMigrate(&TaskRun{})
+	db.AutoMigrate(&Flow{}, &Target{}, &Remote{}, &Task{}, &dep{}, FlowRun{}, &TaskRun{})
 }
 
-func setUpTestDB() {
-	t := &Target{Name: "test", User: "root", Password: "z", IP: "0.0.0.0"}
+// func setUpTestDB() {
+// 	t := &Target{Name: "test", User: "root", Password: "z", IP: "0.0.0.0"}
 
-	t1 := Task{FlowName: "wf1", Name: "nb1", Path: "data/nb1.ipynb", Next: "nb3"}
-	t2 := Task{FlowName: "wf1", Name: "nb2", Path: "data/nb2.ipynb", Next: "nb3"}
-	t3 := Task{FlowName: "wf1", Name: "nb3", Path: "data/nb3.ipynb"}
+// 	t1 := Task{FlowName: "wf1", Name: "nb1", Path: "data/nb1.ipynb", Next: "nb3"}
+// 	t2 := Task{FlowName: "wf1", Name: "nb2", Path: "data/nb2.ipynb", Next: "nb3"}
+// 	t3 := Task{FlowName: "wf1", Name: "nb3", Path: "data/nb3.ipynb"}
 
-	f := &Flow{FlowName: "wf1", Schedule: "* * * * *", Tasks: []Task{t1, t2, t3}}
+// 	f := &Flow{FlowName: "wf1", Schedule: "* * * * *", Tasks: []Task{t1, t2, t3}}
 
-	db.Create(f)
-	db.Create(t)
-}
+// 	db.Create(f)
+// 	db.Create(t)
+// }
 
 //different entry point
 func pollData() {
@@ -72,56 +68,44 @@ func pollData() {
 		}
 
 		for _, t := range rs {
-			//find local runs
-			var flowRuns []FlowRun
-			db.Delete(&flowRuns, "target_id = ?", t.TargetID)
+			time.Sleep(5 * time.Second)
 
-			url := "http://127.0.0.1:8000/sync"
-			method := "GET"
-
-			client := &http.Client{}
-			req, err := http.NewRequest(method, url, nil)
+			url := "http://" + "127.0.0.1:8000" + "/sync"
+			resp, err := http.Get(url)
 			if err != nil {
-				fmt.Println(err)
+				log.Error(err)
+				continue
 			}
 
-			res, err := client.Do(req)
+			b, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				fmt.Println(err)
-			} else {
-				defer res.Body.Close()
-
-				body, _ := ioutil.ReadAll(res.Body)
-
-				fmt.Println(string(body))
+				log.Error(err)
+				continue
 			}
 
-			// url := "http://" + t.LocalAddr + "/ping"
+			var frs []FlowRun
+			err = json.Unmarshal(b, &frs)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
 
-			// resp, err := http.Get(url)
-			// if err != nil {
-			// 	log.Error(err)
-			// } else {
-			// 	b, err := ioutil.ReadAll(resp.Body)
-			// 	if err != nil {
-			// 		log.Error(err)
-			// 	}
+			if len(frs) > 0 {
+				// var flowRuns []FlowRun
+				// db.Delete(&flowRuns, "target_id = ?", t.TargetID)
+				for _, v := range frs {
+					// log.Println(v)
+					err := db.Create(&v).Error
+					if err != nil {
+						log.Error(err)
+					}
+				}
 
-			// 	var frs []FlowRun
-			// 	err = json.Unmarshal(b, &frs)
-			// 	if err != nil {
-			// 		log.Error(err)
-			// 	}
-
-			// 	log.WithFields(logrus.Fields{
-			// 		"remote": t.Name,
-			// 		"count":  len(frs),
-			// 	}).Info("Poll data OK")
-
-			// 	db.Create(&frs)
-			// }
+				log.WithFields(logrus.Fields{
+					"remote": t.Name,
+					"count":  len(frs),
+				}).Info("Poll data OK")
+			}
 		}
-
-		time.Sleep(10 * time.Second)
 	}
 }

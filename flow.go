@@ -19,7 +19,7 @@ type Flow struct {
 	// Target   string `gorm:"not null" json:"Target"`
 	Schedule string `gorm:"not null" json:"Schedule"`
 	Status   string //used by db
-	Tasks    []Task
+	Tasks    []Task `gorm:"ForeignKey:FlowID"`
 }
 
 type Task struct {
@@ -46,7 +46,8 @@ type FlowRun struct {
 	FlowName string
 	Time     time.Time
 	Status   int
-	tasks    []TaskRun
+	TaskRuns []TaskRun
+	Polled   bool
 }
 
 type TaskRun struct {
@@ -93,7 +94,7 @@ func (f *Flow) run() {
 func (r *FlowRun) setTasks(tasks []Task) {
 	for _, t := range tasks {
 		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, runCnt: 2, Status: READY}
-		r.tasks = append(r.tasks, tr)
+		r.TaskRuns = append(r.TaskRuns, tr)
 		db.Create(&tr)
 
 		//generate dep
@@ -109,8 +110,8 @@ func (r *FlowRun) start() {
 	db.Model(r).Update("Status", RUNNING)
 	log.Info("Flow running")
 
-	for i := range r.tasks {
-		r.tasks[i].start()
+	for i := range r.TaskRuns {
+		r.TaskRuns[i].start()
 	}
 }
 
@@ -118,8 +119,8 @@ func (r *FlowRun) start() {
 func (r *FlowRun) status(done chan struct{}) {
 out:
 	for {
-		for i := range r.tasks {
-			if r.tasks[i].Status == FAIL {
+		for i := range r.TaskRuns {
+			if r.TaskRuns[i].Status == FAIL {
 				db.Model(r).Update("Status", FAIL)
 				log.Info("Flow run failed")
 				break out
@@ -141,7 +142,7 @@ out:
 }
 
 func (r FlowRun) done() bool {
-	for _, t := range r.tasks {
+	for _, t := range r.TaskRuns {
 		if t.Status == READY || t.Status == RUNNING {
 			return false
 		}
