@@ -48,7 +48,7 @@ func (t *Target) connect() {
 }
 
 func (t Target) isSSHOK() error {
-	err := t.checkPort("32768")
+	err := t.checkPort("22")
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,6 @@ func (t *Target) getRemotePort() {
 }
 
 func (t *Target) forward() {
-	time.Sleep(100 * time.Millisecond)
 	localListener, err := net.Listen("tcp", t.LocalAddr)
 	if err != nil {
 		log.Error("net.Listen failed: %v", err)
@@ -140,6 +139,7 @@ func (t *Target) copy(localConn net.Conn) {
 	if err != nil {
 		log.Error(err)
 	}
+	time.Sleep(1000 * time.Millisecond)
 
 	go func() {
 		_, err = io.Copy(sshConn, localConn)
@@ -301,7 +301,7 @@ func (t Target) newConfig() *ssh.ClientConfig {
 }
 
 func (t Target) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
-	client, err := ssh.Dial("tcp", t.IP+":"+"32768", config)
+	client, err := ssh.Dial("tcp", t.IP+":"+"22", config)
 	if err != nil {
 		log.Error(err, t.IP, config.Config)
 		return nil, errors.New("SSH failed")
@@ -323,7 +323,7 @@ func (t Target) checkPort(port string) error {
 			return nil
 		}
 	}
-	return errors.New("Port 32768 is not OK")
+	return errors.New("Port 22 is not OK")
 }
 
 func getFreePort() string {

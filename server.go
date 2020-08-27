@@ -82,7 +82,7 @@ func newDeployment(c *gin.Context) {
 		return
 	}
 
-	t.ServerAddr = t.IP + ":32768"
+	t.ServerAddr = t.IP + ":22"
 	t.LocalAddr = "127.0.0.1:" + getFreePort() //This can be get from getFreeport
 	t.RemoteAddr = "127.0.0.1:9000"            //Get freeport -> write to env var -> read remote env
 	t.Deployed = true

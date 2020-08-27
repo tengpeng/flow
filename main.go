@@ -16,6 +16,7 @@ import (
 
 var db *gorm.DB
 
+//TODO: Add flag for dev
 func main() {
 	useWorker := flag.Bool("worker", false, "Start remote worker")
 	flag.Parse()
@@ -50,6 +51,16 @@ func Forward() {
 		db.Find(&ts, "Forwarded = ? AND Deployed = ?", false, true)
 		for _, t := range ts {
 			t.Forward()
+
+			// tunnel := sshtunnel.NewSSHTunnel(
+			// 	"ubuntu@"+t.ServerAddr,
+			// 	sshtunnel.PrivateKeyFile(t.Pem),
+			// 	t.RemoteAddr,
+			// 	"8000",
+			// )
+			// go tunnel.Start()
+			// time.Sleep(100 * time.Millisecond)
+
 			db.Model(t).Update("Forwarded", true)
 
 			log.WithFields(logrus.Fields{
