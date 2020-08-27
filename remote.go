@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cheggaaa/pb"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"
@@ -69,10 +70,11 @@ func (t *Target) deployBinary() error {
 	srcPath := filepath.Join(".", fileName)
 	destPath := filepath.Join(t.RemoteHome, fileName)
 
-	err := t.isJupyterOK()
-	if err != nil {
-		return err
-	}
+	//TODO:
+	// err := t.isJupyterOK()
+	// if err != nil {
+	// 	return err
+	// }
 
 	t.runCommand("rm "+destPath, false)
 	//TODO: progress bar
@@ -86,7 +88,7 @@ func (t *Target) deployBinary() error {
 }
 
 func (t *Target) isJupyterOK() error {
-	_, err := t.runCommand("jupyter --version", false)
+	_, err := t.runCommand("jupyter", false)
 	if err != nil {
 		log.Error("Jupyter is not installed")
 		return err
@@ -168,6 +170,30 @@ func (t *Target) copyFile(srcPath string, dstPath string) {
 	if err != nil {
 		log.Error(err, srcPath)
 	}
+
+	//TODO:
+	go func() {
+		srcInfo, err := srcFile.Stat()
+		if err != nil {
+			log.Error(err)
+		}
+
+		dstInfo, err := dstFile.Stat()
+		if err != nil {
+			log.Error(err)
+		}
+
+		count := int(srcInfo.Size())
+		bar := pb.StartNew(count)
+		for {
+			if int(bar.Get()) < count {
+				bar.Set(int(dstInfo.Size()))
+			} else {
+				bar.Finish()
+				break
+			}
+		}
+	}()
 
 	bytes, err := dstFile.ReadFrom(srcFile)
 	if err != nil {
