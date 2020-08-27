@@ -21,17 +21,18 @@ import (
 
 type Target struct {
 	gorm.Model
-	Name       string `gorm:"unique;not null" json:"Name"`
-	User       string `gorm:"not null" json:"User"`
-	IP         string `gorm:"not null" json:"IP"`
-	Password   string `json:"Password"` //TODO: Add check constraint
-	Pem        string `json:"Pem"`
-	ServerAddr string `gorm:"not null"`
-	LocalAddr  string `gorm:"not null"`
-	RemoteAddr string `gorm:"not null"`
-	RemoteHome string
-	Deployed   bool
-	Forwarded  bool
+	Name        string `gorm:"unique;not null" json:"Name"`
+	User        string `gorm:"not null" json:"User"`
+	IP          string `gorm:"not null" json:"IP"`
+	Password    string `json:"Password"` //TODO: Add check constraint
+	Pem         string `json:"Pem"`
+	ServerAddr  string `gorm:"not null"`
+	LocalAddr   string `gorm:"not null"`
+	RemoteAddr  string `gorm:"not null"`
+	JupyterAddr string
+	RemoteHome  string
+	Deployed    bool
+	Forwarded   bool
 
 	remotePort string
 	client     *ssh.Client
@@ -47,17 +48,18 @@ func (t *Target) connect() {
 	}
 }
 
-func (t Target) isSSHOK() error {
-	err := t.checkPort("22")
+func (t *Target) isSSHOK() error {
+	err := t.checkPort("32768")
 	if err != nil {
 		return err
 	}
 
 	config := t.newConfig()
-	_, err = t.dial(config)
+	client, err := t.dial(config)
 	if err != nil {
 		return err
 	}
+	t.client = client
 	return nil
 }
 
@@ -134,12 +136,13 @@ func (t *Target) forward() {
 }
 
 //TODO: ssh: rejected: connect failed (Connection refused)
+//TODO: ssh: unexpected packet in response to channel open: <nil>
 func (t *Target) copy(localConn net.Conn) {
 	sshConn, err := t.client.Dial("tcp", t.RemoteAddr)
 	if err != nil {
 		log.Error(err)
 	}
-	time.Sleep(1000 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	go func() {
 		_, err = io.Copy(sshConn, localConn)
@@ -301,7 +304,7 @@ func (t Target) newConfig() *ssh.ClientConfig {
 }
 
 func (t Target) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
-	client, err := ssh.Dial("tcp", t.IP+":"+"22", config)
+	client, err := ssh.Dial("tcp", t.IP+":"+"32768", config)
 	if err != nil {
 		log.Error(err, t.IP, config.Config)
 		return nil, errors.New("SSH failed")
@@ -323,7 +326,7 @@ func (t Target) checkPort(port string) error {
 			return nil
 		}
 	}
-	return errors.New("Port 22 is not OK")
+	return errors.New("Port 32768 is not OK")
 }
 
 func getFreePort() string {

@@ -22,7 +22,7 @@ func main() {
 	flag.Parse()
 
 	os.Remove("flow.db")
-	killFlow()
+	//	killFlow()
 
 	initDB()
 	go watchNewFlow()
@@ -51,15 +51,6 @@ func Forward() {
 		db.Find(&ts, "Forwarded = ? AND Deployed = ?", false, true)
 		for _, t := range ts {
 			t.Forward()
-
-			// tunnel := sshtunnel.NewSSHTunnel(
-			// 	"ubuntu@"+t.ServerAddr,
-			// 	sshtunnel.PrivateKeyFile(t.Pem),
-			// 	t.RemoteAddr,
-			// 	"8000",
-			// )
-			// go tunnel.Start()
-			// time.Sleep(100 * time.Millisecond)
 
 			db.Model(t).Update("Forwarded", true)
 

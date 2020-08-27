@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+//TODO: remove json tag ?
 type Flow struct {
 	gorm.Model
 	FlowName string `gorm:"unique;not null" json:"FlowName"`
@@ -27,6 +28,7 @@ type Task struct {
 	FlowName string `gorm:"not null" json:"FlowName"`
 	Name     string `gorm:"not null" json:"Name"`
 	Path     string `gorm:"not null" json:"Path"`
+	Content  string
 	Next     string `json:"Next"`
 }
 
