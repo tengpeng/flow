@@ -32,6 +32,6 @@ func initialMigration() {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&Flow{}, &Target{}, &Task{}, &dep{}, FlowRun{}, &TaskRun{})
+	db.AutoMigrate(&Flow{}, &Target{}, &Task{}, &dep{}, FlowRun{}, &TaskRun{}, &Cmd{})
 	db = db.Set("gorm:auto_preload", true)
 }

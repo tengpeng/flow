@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -20,54 +19,49 @@ func server() *gin.Engine {
 
 	//all
 	r.GET("/ping", ping)
-	r.POST("/cmd/:input", cmd)
+	r.POST("/cmd/:input", newCMD)
 
 	//local only
 	r.POST("/targets", newTarget)
 	r.POST("/targets/:name", newDeployment)
 
 	//core (= centralized db)
+	// r.POST("/notebooks/:name", newNotebook)
 	r.POST("/flows", newFlow) //TODO: how to handle notebook path
 	r.GET("/flows", getFlows) //TODO:
 	r.POST("/tasks")          //TODO:
-	r.POST("/notebooks/:name", newNotebook)
 	r.GET("/runs", getRuns)
 
 	return r
 }
 
+// core add new entry to cmd -> worker poll new cmd to run -> write status to core
 func newNotebook(c *gin.Context) {
-	name := c.Param("name")
+	// name := c.Param("name")
 
-	var t Target
-	err := db.Find(&t, "name = ?", name).Error
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	// var t Target
+	// if db.Find(&t, "name = ?", name).RecordNotFound() {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Target not found"})
+	// 	return
+	// }
 
-	if t.LocalAddr == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	//start jupyter server at 8888
-	fmt.Println("xxx: ", t.LocalAddr)
-	err = onNewServer(t.LocalAddr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	//write db
-	t.JupyterAddr = "127.0.0.1:" + getFreePort()
+	// //start jupyter server at 8888
+	// err := onNewServer(t.LocalAddr)
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	// //write db
+	// t.JupyterAddr = "127.0.0.1:" + getFreePort()
 
-	err = db.Save(&t).Error
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	// err = db.Save(&t).Error
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
 	//openbrowser
-	openBrowser(t.JupyterAddr)
+	//openBrowser(t.JupyterAddr)
 
 	c.JSON(200, gin.H{
 		"message": "New Notebook OK",
@@ -174,12 +168,16 @@ func getRuns(c *gin.Context) {
 	c.JSON(http.StatusOK, runs)
 }
 
-func cmd(c *gin.Context) {
+func newCMD(c *gin.Context) {
 	input := c.Param("input")
-	err := onCMD(input)
+	command := Cmd{Input: input}
+
+	err := db.Create(&command).Error
 	if err != nil {
 		log.Error(err)
+		return
 	}
+
 	c.JSON(200, gin.H{
 		"message": "OK",
 	})
