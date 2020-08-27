@@ -3,10 +3,13 @@ package main
 import (
 	"flag"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/mitchellh/go-ps"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,6 +22,8 @@ func main() {
 	flag.Parse()
 
 	os.Remove("flow.db")
+	killFlow()
+
 	initDB()
 	go watchNewFlow()
 
@@ -47,5 +52,29 @@ func Forward() {
 			db.Model(t).Update("Forwarded", true)
 		}
 		time.Sleep(time.Second)
+	}
+}
+
+func killFlow() {
+	homePath, err := os.UserHomeDir()
+	if err != nil {
+		log.Error(err)
+	}
+
+	cmd := filepath.Join(homePath, "flow")
+
+	prs, err := ps.Processes()
+	if err != nil {
+		log.Info(err)
+	}
+
+	for _, v := range prs {
+		if strings.Contains(v.Executable(), cmd) {
+			p, err := os.FindProcess(v.Pid())
+			if err != nil {
+				log.Error(err)
+			}
+			p.Kill()
+		}
 	}
 }
