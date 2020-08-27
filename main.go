@@ -41,10 +41,11 @@ func main() {
 }
 
 //TODO: check if remote running
+//TODO: forward jupyter
 func Forward() {
 	//set all forward to false
 	var ts []Target
-	db.Model(ts).Update("Forwarded", false)
+	db.Model(&ts).Update("Forwarded", false)
 
 	for {
 		var ts []Target
@@ -52,7 +53,7 @@ func Forward() {
 		for _, t := range ts {
 			t.Forward()
 
-			db.Model(t).Update("Forwarded", true)
+			db.Model(&t).Update("Forwarded", true)
 
 			log.WithFields(logrus.Fields{
 				"remote": t.Name,

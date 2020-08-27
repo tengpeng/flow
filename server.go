@@ -176,7 +176,7 @@ func getRuns(c *gin.Context) {
 func sync(c *gin.Context) {
 	var frs []FlowRun
 	db.Find(&frs, "polled = ? and status = ?", false, []int{2, 3})
-	db.Model(frs).Update("polled", true)
+	db.Model(&frs).Update("polled", true)
 	c.JSON(http.StatusOK, frs)
 }
 
