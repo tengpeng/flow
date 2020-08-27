@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"os"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -18,13 +17,14 @@ func main() {
 	useWorker := flag.Bool("worker", false, "Start remote worker")
 	flag.Parse()
 
-	os.Remove("flow.db")
+	//os.Remove("flow.db")
 
 	initDB()
 	go watchNewFlow()
 	r := server()
 
 	if *useWorker {
+		go watchCmd()
 		log.Info("Bayesnote flow worker started")
 		r.Run(":9000")
 	}
@@ -40,7 +40,8 @@ func main() {
 func Forward() {
 	//set all forward to false
 	var ts []Target
-	db.Model(&ts).Update("Forwarded", false).Update("db_forwarded", false)
+	db.Model(&ts).Update("Forwarded", false)
+	db.Model(&ts).Update("db_forwarded", false)
 
 	for {
 		forwardDB()

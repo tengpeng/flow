@@ -29,7 +29,7 @@ type Target struct {
 	ServerAddr  string `gorm:"not null"`
 	LocalAddr   string `gorm:"not null"`
 	RemoteAddr  string `gorm:"not null"`
-	JupyterAddr string
+	JupyterAddr string //TODO:
 	RemoteHome  string
 	Deployed    bool
 	Forwarded   bool

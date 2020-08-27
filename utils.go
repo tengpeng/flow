@@ -8,35 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// func onNewServer(addr string) error {
-
-// 	url := "http://" + addr + "/cmd/" + "jupyter notebook --ip='*' --NotebookApp.token='' --NotebookApp.password='' --allow-root"
-// 	log.Println(url)
-// 	resp, err := http.Post(url, "", nil)
-// 	if err != nil {
-// 		log.Error(err)
-// 		return err
-// 	}
-
-// 	if resp.StatusCode != 200 {
-// 		return errors.New("Remote resp not 200")
-// 	}
-
-// 	log.Info("New notebook server OK")
-// 	return nil
-// }
-
-// func onCMD(input string) error {
-// 	log.Println(input)
-// 	cmd := exec.Command("sh", "-c", input)
-// 	err := cmd.Run()
-// 	if err != nil {
-// 		log.Error(err)
-// 		return err
-// 	}
-// 	return nil
-// }
-
 func openBrowser(url string) {
 	var err error
 

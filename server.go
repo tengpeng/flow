@@ -35,39 +35,6 @@ func server() *gin.Engine {
 	return r
 }
 
-// core add new entry to cmd -> worker poll new cmd to run -> write status to core
-func newNotebook(c *gin.Context) {
-	// name := c.Param("name")
-
-	// var t Target
-	// if db.Find(&t, "name = ?", name).RecordNotFound() {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Target not found"})
-	// 	return
-	// }
-
-	// //start jupyter server at 8888
-	// err := onNewServer(t.LocalAddr)
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-	// //write db
-	// t.JupyterAddr = "127.0.0.1:" + getFreePort()
-
-	// err = db.Save(&t).Error
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
-	//openbrowser
-	//openBrowser(t.JupyterAddr)
-
-	c.JSON(200, gin.H{
-		"message": "New Notebook OK",
-	})
-}
-
 func ping(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "pong",
