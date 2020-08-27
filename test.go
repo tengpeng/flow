@@ -23,10 +23,10 @@ func startFlowRun() {
 // }
 
 // func testForward() {
-// 	t := Target{Name: "aws", User: "ubuntu", Pem: "/Users/pt/Downloads/hk.pem", IP: "ec2-18-166-71-228.ap-east-1.compute.amazonaws.com"}
+// 	t := Target{Name: "aws", User: "ubuntu", Pem: "/Users/pt/Downloads/hk.pem", IP: "ec2-18-166-71-327688.ap-east-1.compute.amazonaws.com"}
 // 	r := newRemote(t)
 
-// 	r.ServerAddr = "ec2-18-166-71-228.ap-east-1.compute.amazonaws.com:22"
+// 	r.ServerAddr = "ec2-18-166-71-327688.ap-east-1.compute.amazonaws.com:32768"
 // 	r.LocalAddr = "localhost:8000"
 // 	r.RemoteAddr = "localhost:9000"
 
@@ -40,7 +40,7 @@ func startFlowRun() {
 
 // 	r.LocalAddr = "0.0.0.0:8000"
 // 	r.RemoteAddr = "0.0.0.0:9000"
-// 	r.ServerAddr = "0.0.0.0:22"
+// 	r.ServerAddr = "0.0.0.0:32768"
 
 // 	log.Info("forwarding")
 

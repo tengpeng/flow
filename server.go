@@ -54,7 +54,7 @@ func newTarget(c *gin.Context) {
 
 	t.connect()
 	t.getHome()
-	t.ServerAddr = t.IP + ":22"
+	t.ServerAddr = t.IP + ":32768"
 	t.LocalAddr = "0.0.0.0:8000"
 	t.RemoteAddr = "0.0.0.0:9000"
 

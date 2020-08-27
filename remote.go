@@ -47,7 +47,7 @@ func (t *Target) connect() {
 }
 
 func (t Target) isSSHOK() error {
-	err := t.checkPort("22")
+	err := t.checkPort("32768")
 	if err != nil {
 		return err
 	}
@@ -77,9 +77,7 @@ func (t *Target) deployBinary() error {
 	// }
 
 	t.runCommand("rm "+destPath, false)
-	//TODO: progress bar
 	t.copyFile(srcPath, destPath)
-	//TODO: tests
 	go t.runCommand(destPath, true)
 	//TODO: check if running
 	db.Model(t).Update("deployed = ?", true)
@@ -88,7 +86,7 @@ func (t *Target) deployBinary() error {
 }
 
 func (t *Target) isJupyterOK() error {
-	_, err := t.runCommand("jupyter", false)
+	_, err := t.runCommand("shell -c jupyter", false)
 	if err != nil {
 		log.Error("Jupyter is not installed")
 		return err
@@ -223,7 +221,6 @@ func (t *Target) runCommand(cmd string, start bool) (string, error) {
 
 	b, err := session.CombinedOutput(cmd)
 	if err != nil {
-		// log.Error(err)
 		log.WithFields(logrus.Fields{
 			"cmd": cmd,
 			"err": err,
@@ -290,7 +287,7 @@ func (t Target) newConfig() *ssh.ClientConfig {
 }
 
 func (t Target) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
-	client, err := ssh.Dial("tcp", t.IP+":"+"22", config)
+	client, err := ssh.Dial("tcp", t.IP+":"+"32768", config)
 	if err != nil {
 		log.Error(err, t.IP, config.Config)
 		return nil, errors.New("SSH failed")
@@ -312,7 +309,7 @@ func (t Target) checkPort(port string) error {
 			return nil
 		}
 	}
-	return errors.New("Port 22 is not OK")
+	return errors.New("Port 32768 is not OK")
 }
 
 func getFreePort() string {
