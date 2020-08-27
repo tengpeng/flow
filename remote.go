@@ -100,13 +100,13 @@ func (t *Target) getHome() {
 func (t *Target) forward() {
 	localListener, err := net.Listen("tcp", t.LocalAddr)
 	if err != nil {
-		log.Fatalf("net.Listen failed: %v", err)
+		log.Error("net.Listen failed: %v", err)
 	}
 
 	for {
 		localConn, err := localListener.Accept()
 		if err != nil {
-			log.Fatalf("listen.Accept failed: %v", err)
+			log.Error("listen.Accept failed: %v", err)
 		}
 
 		go t.copy(localConn)
@@ -123,14 +123,14 @@ func (t *Target) copy(localConn net.Conn) {
 	go func() {
 		_, err = io.Copy(sshConn, localConn)
 		if err != nil {
-			log.Fatalf("io.Copy failed: %v", err)
+			log.Error("io.Copy failed: %v", err)
 		}
 	}()
 
 	go func() {
 		_, err = io.Copy(localConn, sshConn)
 		if err != nil {
-			log.Fatalf("io.Copy failed: %v", err)
+			log.Error("io.Copy failed: %v", err)
 		}
 	}()
 }
