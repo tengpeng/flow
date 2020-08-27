@@ -18,25 +18,20 @@ func server() *gin.Engine {
 		AllowOrigins: []string{"*"},
 	}))
 
+	//all
 	r.GET("/ping", ping)
+	r.POST("/cmd/:input", cmd)
 
+	//local only
 	r.POST("/targets", newTarget)
 	r.POST("/targets/:name", newDeployment)
 
-	r.POST("/flows", newFlow)
+	//core (= centralized db)
+	r.POST("/flows", newFlow) //TODO: how to handle notebook path
 	r.GET("/flows", getFlows) //TODO:
-
-	//TODO: how to handle notebook path
-	r.POST("/tasks")
-
+	r.POST("/tasks")          //TODO:
 	r.POST("/notebooks/:name", newNotebook)
-
 	r.GET("/runs", getRuns)
-
-	//TODO: need sync for everything
-	r.GET("/sync", sync)
-
-	r.POST("/cmd/:input", cmd)
 
 	return r
 }
@@ -85,7 +80,6 @@ func ping(c *gin.Context) {
 	})
 }
 
-//TODO: connect once
 func newTarget(c *gin.Context) {
 	var t Target
 	err := c.BindJSON(&t)
@@ -101,6 +95,13 @@ func newTarget(c *gin.Context) {
 	}
 
 	t.getRemoteHome()
+
+	//set core db flag
+	var ts []Target
+	db.Find(&ts)
+	if len(ts) == 0 {
+		t.Database = true
+	}
 
 	err = db.Create(&t).Error
 	if err != nil {
@@ -160,6 +161,7 @@ func newFlow(c *gin.Context) {
 	})
 }
 
+//TODO:
 func getFlows(c *gin.Context) {
 	var f Flow
 	db.First(&f, 1)
@@ -170,14 +172,6 @@ func getRuns(c *gin.Context) {
 	var runs []FlowRun
 	db.Find(&runs)
 	c.JSON(http.StatusOK, runs)
-}
-
-// only return finished runs
-func sync(c *gin.Context) {
-	var frs []FlowRun
-	db.Find(&frs, "polled = ? and status = ?", false, []int{2, 3})
-	db.Model(&frs).Update("polled", true)
-	c.JSON(http.StatusOK, frs)
 }
 
 func cmd(c *gin.Context) {

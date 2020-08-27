@@ -2,14 +2,10 @@ package main
 
 import (
 	"flag"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/mitchellh/go-ps"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
@@ -21,8 +17,7 @@ func main() {
 	useWorker := flag.Bool("worker", false, "Start remote worker")
 	flag.Parse()
 
-	os.Remove("flow.db")
-	//	killFlow()
+	//os.Remove("flow.db")
 
 	initDB()
 	go watchNewFlow()
@@ -34,55 +29,57 @@ func main() {
 	}
 
 	go Forward()
-	go pollData()
+
 	log.Info("Bayesnote flow core started")
 
 	r.Run(":9000")
 }
 
 //TODO: check if remote running
-//TODO: forward jupyter
 func Forward() {
 	//set all forward to false
 	var ts []Target
 	db.Model(&ts).Update("Forwarded", false)
 
 	for {
-		var ts []Target
-		db.Find(&ts, "Forwarded = ? AND Deployed = ?", false, true)
-		for _, t := range ts {
-			t.Forward()
-
-			db.Model(&t).Update("Forwarded", true)
-
-			log.WithFields(logrus.Fields{
-				"remote": t.Name,
-			}).Info("Start forwarding")
-		}
+		forwardDB()
+		forwardJupyter()
 		time.Sleep(time.Second)
 	}
 }
 
-func killFlow() {
-	homePath, err := os.UserHomeDir()
-	if err != nil {
-		log.Error(err)
+func forwardDB() {
+	var t Target
+	db.First(&t, "database = ? AND deployed = ? AND db_forwarded = ?", true, true, false)
+
+	if t.IP == "" {
+		return
 	}
 
-	cmd := filepath.Join(homePath, "flow")
+	t.Forward()
 
-	prs, err := ps.Processes()
-	if err != nil {
-		log.Info(err)
+	db.Model(&t).Update("DBForwarded", true)
+
+	log.WithFields(logrus.Fields{
+		"remote": t.Name,
+	}).Info("Start forwarding for db")
+}
+
+func forwardJupyter() {
+	var ts []Target
+	db.Find(&ts, "Deployed = ? AND Forwarded = ?", true, true).Not("JupyterAddr = ?", "")
+
+	if len(ts) == 0 {
+		return
 	}
 
-	for _, v := range prs {
-		if strings.Contains(v.Executable(), cmd) {
-			p, err := os.FindProcess(v.Pid())
-			if err != nil {
-				log.Error(err)
-			}
-			p.Kill()
-		}
+	for i := range ts {
+		ts[i].Forward()
+
+		db.Model(&ts[i]).Update("Forwarded", true)
+
+		log.WithFields(logrus.Fields{
+			"remote": ts[i].Name,
+		}).Info("Start forwarding for jupyter")
 	}
 }

@@ -33,6 +33,8 @@ type Target struct {
 	RemoteHome  string
 	Deployed    bool
 	Forwarded   bool
+	Database    bool
+	DBForwarded bool
 
 	remotePort string
 	client     *ssh.Client
