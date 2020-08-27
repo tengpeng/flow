@@ -16,7 +16,6 @@ type Flow struct {
 	gorm.Model
 	FlowName string `gorm:"unique;not null" json:"FlowName"`
 	TargetID uint
-	// Target   string `gorm:"not null" json:"Target"`
 	Schedule string `gorm:"not null" json:"Schedule"`
 	Status   string //used by db
 	Tasks    []Task `gorm:"ForeignKey:FlowID"`

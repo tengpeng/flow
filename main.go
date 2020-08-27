@@ -15,8 +15,6 @@ import (
 
 var db *gorm.DB
 
-//TODO: remove fatal
-//TODO: when to create new remote
 func main() {
 	useWorker := flag.Bool("worker", false, "Start remote worker")
 	flag.Parse()
@@ -39,6 +37,7 @@ func main() {
 	r.Run(":9000")
 }
 
+//TODO: add deployed flag
 func Forward() {
 	//set all forward to false
 	var ts []Target

@@ -113,7 +113,7 @@ func (t *Target) forward() {
 	}
 }
 
-//TODO
+//TODO: ssh: rejected: connect failed (Connection refused)
 func (t *Target) copy(localConn net.Conn) {
 	sshConn, err := t.client.Dial("tcp", t.RemoteAddr)
 	if err != nil {
