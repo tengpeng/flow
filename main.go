@@ -10,6 +10,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/mitchellh/go-ps"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,24 +20,26 @@ func main() {
 	useWorker := flag.Bool("worker", false, "Start remote worker")
 	flag.Parse()
 
-	//os.Remove("flow.db")
+	os.Remove("flow.db")
 	killFlow()
 
 	initDB()
 	go watchNewFlow()
+	r := server()
 
 	if *useWorker {
 		log.Info("Bayesnote flow worker started")
-	} else {
-		go Forward()
-		go pollData()
-		log.Info("Bayesnote flow core started")
+		r.Run(":9000")
 	}
 
-	r := server()
+	go Forward()
+	go pollData()
+	log.Info("Bayesnote flow core started")
+
 	r.Run(":9000")
 }
 
+//TODO: check if remote running
 func Forward() {
 	//set all forward to false
 	var ts []Target
@@ -48,6 +51,10 @@ func Forward() {
 		for _, t := range ts {
 			t.Forward()
 			db.Model(t).Update("Forwarded", true)
+
+			log.WithFields(logrus.Fields{
+				"remote": t.Name,
+			}).Info("Start forwarding")
 		}
 		time.Sleep(time.Second)
 	}

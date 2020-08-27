@@ -53,10 +53,7 @@ func newTarget(c *gin.Context) {
 	}
 
 	t.connect()
-	t.getHome()
-	t.ServerAddr = t.IP + ":32768"
-	t.LocalAddr = "0.0.0.0:8000"
-	t.RemoteAddr = "0.0.0.0:9000"
+	t.getRemoteHome()
 
 	err = db.Create(&t).Error
 	if err != nil {
@@ -85,6 +82,12 @@ func newDeployment(c *gin.Context) {
 		return
 	}
 
+	t.ServerAddr = t.IP + ":32768"
+	t.LocalAddr = "127.0.0.1:" + getFreePort() //This can be get from getFreeport
+	t.RemoteAddr = "127.0.0.1:9000"            //Get freeport -> write to env var -> read remote env
+	t.Deployed = true
+
+	db.Save(&t)
 	c.JSON(200, gin.H{
 		"message": "New deployment OK",
 	})

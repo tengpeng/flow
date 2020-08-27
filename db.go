@@ -50,7 +50,7 @@ func pollData() {
 		}
 
 		for _, t := range rs {
-			url := "http://" + "127.0.0.1:8000" + "/sync" //TODO: s
+			url := "http://" + t.LocalAddr + "/sync" //TODO: s
 			resp, err := http.Get(url)
 			if err != nil {
 				log.Error(err)

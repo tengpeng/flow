@@ -33,8 +33,9 @@ type Target struct {
 	Deployed   bool
 	Forwarded  bool
 
-	client *ssh.Client
-	config *ssh.ClientConfig
+	remotePort string
+	client     *ssh.Client
+	config     *ssh.ClientConfig
 }
 
 func (t *Target) connect() {
@@ -78,7 +79,7 @@ func (t *Target) deployBinary() error {
 
 	t.runCommand("rm "+destPath, false)
 	t.copyFile(srcPath, destPath)
-	go t.runCommand(destPath, true)
+	go t.runCommand(destPath+" -worker", true)
 	//TODO: check if running
 	db.Model(t).Update("deployed = ?", true)
 
@@ -95,7 +96,7 @@ func (t *Target) isJupyterOK() error {
 	return nil
 }
 
-func (t *Target) getHome() {
+func (t *Target) getRemoteHome() {
 	homeDir, err := t.runCommand("eval echo ~$USER", false)
 	if err != nil {
 		log.Error(err)
@@ -104,7 +105,20 @@ func (t *Target) getHome() {
 	log.Info("Remote home dir: ", homeDir)
 }
 
+func (t *Target) getRemotePort() {
+	p, err := t.runCommand("env | grep FLOW_PORT", false)
+	if err != nil {
+		log.Error(err)
+	}
+
+	t.remotePort = p
+	log.WithFields(logrus.Fields{
+		"port": p,
+	}).Info("Get remote work port")
+}
+
 func (t *Target) forward() {
+	time.Sleep(100 * time.Millisecond)
 	localListener, err := net.Listen("tcp", t.LocalAddr)
 	if err != nil {
 		log.Error("net.Listen failed: %v", err)
