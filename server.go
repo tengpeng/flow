@@ -9,6 +9,7 @@ import (
 
 func server() *gin.Engine {
 	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
 
 	//TODO:
 	r.Use(cors.New(cors.Config{
