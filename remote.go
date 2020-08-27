@@ -47,7 +47,7 @@ func (t *Target) connect() {
 }
 
 func (t Target) isSSHOK() error {
-	err := t.checkPort("32768")
+	err := t.checkPort("22")
 	if err != nil {
 		return err
 	}
@@ -178,16 +178,16 @@ func (t *Target) copyFile(srcPath string, dstPath string) {
 			log.Error(err)
 		}
 
-		dstInfo, err := dstFile.Stat()
-		if err != nil {
-			log.Error(err)
-		}
-
 		count := int(srcInfo.Size())
 		bar := pb.StartNew(count)
 		for {
 			if int(bar.Get()) < count {
-				bar.Set(int(dstInfo.Size()))
+				dstInfo, err := dstFile.Stat()
+				if err != nil {
+					log.Error(err)
+				}
+
+				bar.Set64(dstInfo.Size())
 			} else {
 				bar.Finish()
 				break
@@ -290,7 +290,7 @@ func (t Target) newConfig() *ssh.ClientConfig {
 }
 
 func (t Target) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
-	client, err := ssh.Dial("tcp", t.IP+":"+"32768", config)
+	client, err := ssh.Dial("tcp", t.IP+":"+"22", config)
 	if err != nil {
 		log.Error(err, t.IP, config.Config)
 		return nil, errors.New("SSH failed")

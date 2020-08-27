@@ -37,6 +37,7 @@ func ping(c *gin.Context) {
 	})
 }
 
+//TODO: connect once
 func newTarget(c *gin.Context) {
 	var t Target
 	err := c.BindJSON(&t)
