@@ -113,6 +113,7 @@ func (t *Target) forward() {
 	}
 }
 
+//TODO
 func (t *Target) copy(localConn net.Conn) {
 	sshConn, err := t.client.Dial("tcp", t.RemoteAddr)
 	if err != nil {

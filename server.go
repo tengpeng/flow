@@ -8,9 +8,9 @@ import (
 )
 
 func server() *gin.Engine {
-	r := gin.Default()
 	gin.SetMode(gin.ReleaseMode)
 
+	r := gin.Default()
 	//TODO:
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"*"},
@@ -29,20 +29,6 @@ func server() *gin.Engine {
 	r.GET("/sync", sync)
 
 	return r
-}
-
-func sync(c *gin.Context) {
-	c.Header("Connection", "keep-alive")
-	var frs []FlowRun
-	db.Find(&frs, "polled = ?", false)
-	db.Model(frs).Update("polled", true)
-	if len(frs) > 0 {
-		c.JSON(http.StatusOK, frs)
-	} else {
-		//TODO:
-		return
-	}
-
 }
 
 func ping(c *gin.Context) {
@@ -127,4 +113,11 @@ func getRuns(c *gin.Context) {
 	var runs []FlowRun
 	db.Find(&runs)
 	c.JSON(http.StatusOK, runs)
+}
+
+func sync(c *gin.Context) {
+	var frs []FlowRun
+	db.Find(&frs, "polled = ?", false)
+	db.Model(frs).Update("polled", true)
+	c.JSON(http.StatusOK, frs)
 }
