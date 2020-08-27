@@ -72,10 +72,15 @@ func newDeployment(c *gin.Context) {
 	name := c.Param("name")
 	var t Target
 	db.First(&t, "name = ?", name)
-	if t.IP != "" {
-		t.connect()
-		t.deployBinary()
+	if t.IP == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Target not found"})
 		return
+	}
+
+	t.connect()
+	err := t.deployBinary()
+	if err != nil {
+
 	}
 
 	c.JSON(200, gin.H{

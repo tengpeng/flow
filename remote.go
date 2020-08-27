@@ -36,7 +36,15 @@ type Target struct {
 	config *ssh.ClientConfig
 }
 
-//TODO: SSH error
+func (t *Target) connect() {
+	config := t.newConfig()
+	var err error
+	t.client, err = t.dial(config)
+	if err != nil {
+		log.Error(err)
+	}
+}
+
 func (t Target) isSSHOK() error {
 	err := t.checkPort("32768")
 	if err != nil {
@@ -51,27 +59,21 @@ func (t Target) isSSHOK() error {
 	return nil
 }
 
-func (t *Target) connect() {
-	config := t.newConfig()
-	var err error
-	t.client, err = t.dial(config)
-	if err != nil {
-		log.Error(err)
-	}
-}
-
 func (t *Target) Forward() {
 	t.connect()
 	go t.forward()
 }
 
-func (t *Target) deployBinary() {
+func (t *Target) deployBinary() error {
 	fileName := "flow"
 	srcPath := filepath.Join(".", fileName)
 	destPath := filepath.Join(t.RemoteHome, fileName)
 
-	t.isJupyterOK()
-	//TODO: stop run
+	err := t.isJupyterOK()
+	if err != nil {
+		return err
+	}
+
 	t.runCommand("rm "+destPath, false)
 	//TODO: progress bar
 	t.copyFile(srcPath, destPath)
@@ -79,15 +81,18 @@ func (t *Target) deployBinary() {
 	go t.runCommand(destPath, true)
 	//TODO: check if running
 	db.Model(t).Update("deployed = ?", true)
+
+	return nil
 }
 
-func (t *Target) isJupyterOK() {
+func (t *Target) isJupyterOK() error {
 	_, err := t.runCommand("jupyter --version", false)
 	if err != nil {
 		log.Error("Jupyter is not installed")
-		return
+		return err
 	}
 	log.Info("Jupyter OK")
+	return nil
 }
 
 func (t *Target) getHome() {
