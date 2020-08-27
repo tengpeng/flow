@@ -18,6 +18,7 @@ func server() *gin.Engine {
 	r.GET("/ping", ping)
 
 	r.POST("/targets", newTarget)
+	r.POST("/targets/:name", newDeployment)
 
 	r.POST("/flows", newFlow)
 	r.GET("/flows", getFlows) //TODO:
@@ -63,6 +64,8 @@ func newTarget(c *gin.Context) {
 		return
 	}
 
+	t.connect()
+	t.getHome()
 	t.ServerAddr = t.IP + ":22"
 	t.LocalAddr = "0.0.0.0:8000"
 	t.RemoteAddr = "0.0.0.0:9000"
@@ -73,11 +76,23 @@ func newTarget(c *gin.Context) {
 		return
 	}
 
-	// r := newRemote(t)
-	// r.deployBinary()
-
 	c.JSON(200, gin.H{
 		"message": "New target created",
+	})
+}
+
+func newDeployment(c *gin.Context) {
+	name := c.Param("name")
+	var t Target
+	db.First(&t, "name = ?", name)
+	if t.IP != "" {
+		t.connect()
+		t.deployBinary()
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Target not found",
 	})
 }
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -60,45 +59,28 @@ func (t *Target) connect() {
 	}
 }
 
-//TODO: check jupyter installation
-//TODO: error handling
-// func newRemote(t Target) {
-// 	config := t.newConfig()
-// 	client, err := t.dial(config)
-// 	if err != nil {
-// 		log.Error(err)
-// 	}
-
-// 	// r := Remote{TargetID: t.ID, Name: t.Name, ServerAddr: t.IP + ":22", LocalAddr: "0.0.0.0:8000", RemoteAddr: "0.0.0.0:9000", client: client}
-// 	t.getHome()
-// 	db.Model(r).Update("Status", RUNNING)
-// 	return &r
-// }
-
-func (r *Target) Forward() {
-	r.connect()
-	go r.forward()
+func (t *Target) Forward() {
+	t.connect()
+	go t.forward()
 }
 
-//TODO: websocket
-
-func (r *Target) deployBinary() {
+func (t *Target) deployBinary() {
 	fileName := "flow"
 	srcPath := filepath.Join(".", fileName)
-	destPath := filepath.Join(r.RemoteHome, fileName)
+	destPath := filepath.Join(t.RemoteHome, fileName)
 
-	r.isJupyterOK()
+	t.isJupyterOK()
 	//TODO: stop run
-	r.runCommand("rm "+destPath, false)
+	t.runCommand("rm "+destPath, false)
 	//TODO: progress bar
-	r.copyFile(srcPath, destPath)
+	t.copyFile(srcPath, destPath)
 	//TODO: tests
-	r.runCommand(destPath, true)
+	go t.runCommand(destPath, true)
 	//TODO: check if running
 }
 
-func (r *Target) isJupyterOK() {
-	_, err := r.runCommand("jupyter --version", false)
+func (t *Target) isJupyterOK() {
+	_, err := t.runCommand("jupyter --version", false)
 	if err != nil {
 		log.Error("Jupyter is not installed")
 		return
@@ -106,17 +88,17 @@ func (r *Target) isJupyterOK() {
 	log.Info("Jupyter OK")
 }
 
-func (r *Target) getHome() {
-	homeDir, err := r.runCommand("eval echo ~$USER", false)
+func (t *Target) getHome() {
+	homeDir, err := t.runCommand("eval echo ~$USER", false)
 	if err != nil {
 		log.Error(err)
 	}
-	r.RemoteHome = filepath.Join(homeDir)
+	t.RemoteHome = filepath.Join(homeDir)
 	log.Info("Remote home dir: ", homeDir)
 }
 
-func (r *Target) forward() {
-	localListener, err := net.Listen("tcp", r.LocalAddr)
+func (t *Target) forward() {
+	localListener, err := net.Listen("tcp", t.LocalAddr)
 	if err != nil {
 		log.Fatalf("net.Listen failed: %v", err)
 	}
@@ -127,12 +109,12 @@ func (r *Target) forward() {
 			log.Fatalf("listen.Accept failed: %v", err)
 		}
 
-		go r.copy(localConn)
+		go t.copy(localConn)
 	}
 }
 
-func (r *Target) copy(localConn net.Conn) {
-	sshConn, err := r.client.Dial("tcp", r.RemoteAddr)
+func (t *Target) copy(localConn net.Conn) {
+	sshConn, err := t.client.Dial("tcp", t.RemoteAddr)
 	if err != nil {
 		log.Error(err)
 	}
@@ -152,8 +134,8 @@ func (r *Target) copy(localConn net.Conn) {
 	}()
 }
 
-func (r *Target) createDstFile(dstPath string) *sftp.File {
-	sftp, err := sftp.NewClient(r.client)
+func (t *Target) createDstFile(dstPath string) *sftp.File {
+	sftp, err := sftp.NewClient(t.client)
 	if err != nil {
 		log.Error(err)
 	}
@@ -171,8 +153,8 @@ func (r *Target) createDstFile(dstPath string) *sftp.File {
 }
 
 //TODO: compare size of files
-func (r *Target) copyFile(srcPath string, dstPath string) {
-	dstFile := r.createDstFile(dstPath)
+func (t *Target) copyFile(srcPath string, dstPath string) {
+	dstFile := t.createDstFile(dstPath)
 
 	srcFile, err := os.Open(srcPath)
 	if err != nil {
@@ -198,36 +180,53 @@ func (r *Target) copyFile(srcPath string, dstPath string) {
 	}).Info("Copy file ")
 }
 
-func (r *Target) runCommand(cmd string, start bool) (string, error) {
-	session, err := r.client.NewSession()
+func (t *Target) runCommand(cmd string, start bool) (string, error) {
+	session, err := t.client.NewSession()
 	if err != nil {
 		log.Error(err)
 	}
 	defer session.Close()
 
-	var b bytes.Buffer
-	session.Stdout = &b
-
-	if !start {
-		err = session.Run(cmd)
-	} else {
-		err = session.Start(cmd)
-	}
+	b, err := session.CombinedOutput(cmd)
 	if err != nil {
+		// log.Error(err)
 		log.WithFields(logrus.Fields{
 			"cmd": cmd,
-			"out": session.Stderr, //TODO
-		}).Info("Run command failed")
-
+			"err": err,
+		}).Error("Run command failed")
 		return "", err
 	}
 
 	log.WithFields(logrus.Fields{
 		"cmd": cmd,
-		"out": b.String(),
+		"out": strings.TrimSuffix(string(b), "\n"), //TODO
 	}).Info("Run command OK")
 
-	return strings.TrimSuffix(b.String(), "\n"), err
+	return strings.TrimSuffix(string(b), "\n"), nil
+
+	// var b bytes.Buffer
+	// session.Stdout = &b
+
+	// if !start {
+	// 	err = session.Run(cmd)
+	// } else {
+	// 	err = session.Start(cmd)
+	// }
+	// if err != nil {
+	// log.WithFields(logrus.Fields{
+	// 	"cmd": cmd,
+	// 	"out": session.Stderr, //TODO
+	// }).Info("Run command failed")
+
+	// 	return "", err
+	// }
+
+	// log.WithFields(logrus.Fields{
+	// 	"cmd": cmd,
+	// 	"out": b.String(),
+	// }).Info("Run command OK")
+
+	// return strings.TrimSuffix(b.String(), "\n"), err
 }
 
 func (t Target) newClientPemConfig() *ssh.ClientConfig {

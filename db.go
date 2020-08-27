@@ -68,8 +68,6 @@ func pollData() {
 		}
 
 		for _, t := range rs {
-			time.Sleep(5 * time.Second)
-
 			url := "http://" + "127.0.0.1:8000" + "/sync"
 			resp, err := http.Get(url)
 			if err != nil {
@@ -106,5 +104,6 @@ func pollData() {
 				}).Info("Poll data OK")
 			}
 		}
+		time.Sleep(10 * time.Second)
 	}
 }
