@@ -41,7 +41,7 @@ type dep struct {
 type FlowRun struct {
 	gorm.Model
 	FlowID   uint
-	TargetID uint //TODO
+	TargetID uint
 	FlowName string
 	Time     time.Time
 	Status   int
@@ -114,7 +114,6 @@ func (r *FlowRun) start() {
 	}
 }
 
-//TODO: tests
 func (r *FlowRun) status(done chan struct{}) {
 out:
 	for {
@@ -214,7 +213,7 @@ func (t *TaskRun) run() {
 	t.delParent()
 }
 
-//TODO: add all existing flows to cron
+//TODO: add all existing flows to cron when restarted
 func watchNewFlow() {
 	for {
 		var f Flow

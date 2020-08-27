@@ -37,7 +37,6 @@ func main() {
 	r.Run(":9000")
 }
 
-//TODO: add deployed flag
 func Forward() {
 	//set all forward to false
 	var ts []Target
@@ -45,7 +44,7 @@ func Forward() {
 
 	for {
 		var ts []Target
-		db.Find(&ts, "Forwarded = ?", false)
+		db.Find(&ts, "Forwarded = ? AND Deployed = ?", false, true)
 		for _, t := range ts {
 			t.Forward()
 			db.Model(t).Update("Forwarded", true)

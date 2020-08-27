@@ -44,7 +44,7 @@ func initialMigration() {
 func pollData() {
 	for {
 		var rs []Target
-		err := db.Find(&rs).Error
+		err := db.Find(&rs, "Forwarded = ?", true).Error
 		if err != nil {
 			log.Error(err)
 		}

@@ -29,6 +29,7 @@ type Target struct {
 	LocalAddr  string `gorm:"not null"`
 	RemoteAddr string `gorm:"not null"`
 	RemoteHome string
+	Deployed   bool
 	Forwarded  bool
 
 	client *ssh.Client
@@ -77,6 +78,7 @@ func (t *Target) deployBinary() {
 	//TODO: tests
 	go t.runCommand(destPath, true)
 	//TODO: check if running
+	db.Model(t).Update("deployed = ?", true)
 }
 
 func (t *Target) isJupyterOK() {
