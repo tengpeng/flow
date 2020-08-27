@@ -204,34 +204,13 @@ func (t *Target) runCommand(cmd string, start bool) (string, error) {
 	}).Info("Run command OK")
 
 	return strings.TrimSuffix(string(b), "\n"), nil
-
-	// var b bytes.Buffer
-	// session.Stdout = &b
-
-	// if !start {
-	// 	err = session.Run(cmd)
-	// } else {
-	// 	err = session.Start(cmd)
-	// }
-	// if err != nil {
-	// log.WithFields(logrus.Fields{
-	// 	"cmd": cmd,
-	// 	"out": session.Stderr, //TODO
-	// }).Info("Run command failed")
-
-	// 	return "", err
-	// }
-
-	// log.WithFields(logrus.Fields{
-	// 	"cmd": cmd,
-	// 	"out": b.String(),
-	// }).Info("Run command OK")
-
-	// return strings.TrimSuffix(b.String(), "\n"), err
 }
 
 func (t Target) newClientPemConfig() *ssh.ClientConfig {
-	//TODO: Check permission 400
+	err := os.Chmod(t.Pem, 0400)
+	if err != nil {
+		log.Error(err)
+	}
 
 	pemBytes, err := ioutil.ReadFile(t.Pem)
 	if err != nil {
