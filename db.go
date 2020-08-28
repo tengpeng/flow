@@ -11,6 +11,7 @@ import (
 func initDB() {
 	openDB()
 	initialMigration()
+	db = db.Set("gorm:auto_preload", true)
 }
 
 func openDB() {
@@ -33,5 +34,4 @@ func initialMigration() {
 	}
 
 	db.AutoMigrate(&Flow{}, &Host{}, &Task{}, &dep{}, FlowRun{}, &TaskRun{}, &Cmd{}, &Tunnel{})
-	db = db.Set("gorm:auto_preload", true)
 }

@@ -18,7 +18,7 @@ type Flow struct {
 	HostID   uint   //TODO
 	Schedule string `gorm:"not null" json:"Schedule"`
 	Status   string //used by db
-	Tasks    []Task `gorm:"ForeignKey:FlowID"`
+	Tasks    []Task //`gorm:"ForeignKey:FlowID"`
 }
 
 type Task struct {
@@ -46,7 +46,7 @@ type FlowRun struct {
 	FlowName string
 	Time     time.Time
 	Status   int
-	TaskRuns []TaskRun //TODO: why null
+	TaskRuns []TaskRun `gorm:"ForeignKey:FlowRunID"` //TODO: why null
 }
 
 type TaskRun struct {
@@ -93,12 +93,18 @@ func (f *Flow) run() {
 func (r *FlowRun) setTasks(tasks []Task) {
 	for _, t := range tasks {
 		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, runCnt: 2, Status: READY}
-		r.TaskRuns = append(r.TaskRuns, tr)
 		db.Create(&tr)
+
+		r.TaskRuns = append(r.TaskRuns, tr)
 
 		//generate dep
 		if len(t.Next) > 0 {
 			db.Create(&dep{FlowRunID: r.ID, FlowName: t.FlowName, Parent: t.Name, Child: t.Next})
+		}
+
+		err := db.Save(&r).Error
+		if err != nil {
+			log.Error(err)
 		}
 	}
 

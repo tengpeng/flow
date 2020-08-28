@@ -127,6 +127,7 @@ func newFlow(c *gin.Context) {
 func getFlows(c *gin.Context) {
 	var f Flow
 	db.First(&f, 1)
+	//db.Preload("Tasks").First(&f)
 	c.JSON(http.StatusOK, f)
 }
 
