@@ -16,11 +16,14 @@ var p string
 //TODO: Add flag for dev
 func main() {
 	Worker := flag.Bool("worker", false, "Start remote worker")
-	Port := flag.String("port", "22", "Set SSH port")
+	Port := flag.String("p", "22", "Set SSH port")
+	DB := flag.Bool("db", false, "Remove db")
 	flag.Parse()
 	p = *Port
 
-	os.Remove("flow.db")
+	if *DB {
+		os.Remove("flow.db")
+	}
 
 	initDB()
 	go flowWatcher()
@@ -30,6 +33,7 @@ func main() {
 		go runJupyter()
 		log.Info("Bayesnote flow worker started")
 		r.Run(":9000")
+		return
 	}
 
 	go tunnelWatcher()

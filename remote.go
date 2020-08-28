@@ -34,7 +34,7 @@ type Host struct {
 type Tunnel struct {
 	gorm.Model
 	HostID     uint
-	LocalAddr  string `gorm:"unique;not null"`
+	LocalAddr  string `gorm:"not null"`
 	ServerAddr string `gorm:"not null"`
 	RemoteAddr string `gorm:"not null"`
 	Forwarded  bool
@@ -90,12 +90,6 @@ func (t *Tunnel) forward() {
 		log.Error("net.Listen failed: %v", err)
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			log.Info("Recovered in f", r)
-		}
-	}()
-
 	for {
 		localConn, err := localListener.Accept()
 		if err != nil {
@@ -110,6 +104,12 @@ func (t *Tunnel) forward() {
 //TODO: ssh: unexpected packet in response to channel open: <nil>
 //TODO: ERRO[0181] io.Copy failed: %vreadfrom tcp 127.0.0.1:8001->127.0.0.1:53145: write tcp 127.0.0.1:8001->127.0.0.1:53145: write: broken pipe
 func (t *Tunnel) copy(sshClient *ssh.Client, localConn net.Conn) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Info("Recovered in f", r)
+		}
+	}()
+
 	sshConn, err := sshClient.Dial("tcp", t.RemoteAddr)
 	if err != nil {
 		log.Error(err)
@@ -166,7 +166,7 @@ func (t *Host) copyFile(srcPath string, dstPath string) {
 
 		count := int(srcInfo.Size())
 		bar := pb.StartNew(count)
-		bar.SetUnits(pb.MiB)
+		bar.SetUnits(pb.U_BYTES)
 		for {
 			if int(bar.Get()) < count {
 				dstInfo, err := dstFile.Stat()
@@ -289,7 +289,7 @@ func (t Host) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
 }
 
 func (t Host) checkPort(port string) error {
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 10; i++ {
 		time.Sleep(time.Second)
 		conn, err := net.DialTimeout("tcp", net.JoinHostPort(t.IP, port), time.Second)
 		if err != nil {

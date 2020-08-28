@@ -15,8 +15,8 @@ func tunnelWatcher() {
 
 	//set up core + jupyter tunnel
 	go watchCoreTunnel()
-	go forward()
 
+	forward()
 }
 
 //TODO: add all existing flows to cron when restarted
@@ -82,16 +82,15 @@ func newTunnel(h Host, core bool) {
 
 //TODO: check if remote running
 //TODO: add status update check heartbeat for remote
+//TODO: it does not pick up tunnel
 func forward() {
 	for {
 		time.Sleep(time.Second)
-
 		var t Tunnel
 		if db.First(&t, "forwarded = ?", false).RecordNotFound() {
 			continue
 		}
-
-		t.forward()
+		go t.forward()
 
 		db.Model(&t).Update("forwarded", true)
 
