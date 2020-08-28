@@ -65,6 +65,7 @@ func (t *Host) deployBinary() error {
 	srcPath := filepath.Join(".", fileName)
 	destPath := filepath.Join(remoteHome, fileName)
 
+	t.runCommand("pkill -f " + destPath)
 	t.runCommand("rm " + destPath)
 	t.copyFile(srcPath, destPath)
 	go t.runCommand(destPath + " -worker")
@@ -104,17 +105,10 @@ func (t *Tunnel) forward() {
 //TODO: ssh: unexpected packet in response to channel open: <nil>
 //TODO: ERRO[0181] io.Copy failed: %vreadfrom tcp 127.0.0.1:8001->127.0.0.1:53145: write tcp 127.0.0.1:8001->127.0.0.1:53145: write: broken pipe
 func (t *Tunnel) copy(sshClient *ssh.Client, localConn net.Conn) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Info("Recovered in f", r)
-		}
-	}()
-
 	sshConn, err := sshClient.Dial("tcp", t.RemoteAddr)
 	if err != nil {
 		log.Error(err)
 	}
-	time.Sleep(1 * time.Second)
 
 	go func() {
 		_, err = io.Copy(sshConn, localConn)

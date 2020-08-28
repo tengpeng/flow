@@ -92,6 +92,10 @@ func forward() {
 		}
 		go t.forward()
 
+		if t.LocalAddr != "127.0.0.1:8000" {
+			openBrowser(t.LocalAddr)
+		}
+
 		db.Model(&t).Update("forwarded", true)
 
 		log.WithFields(logrus.Fields{

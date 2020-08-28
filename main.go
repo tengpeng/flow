@@ -30,21 +30,23 @@ func main() {
 	r := server()
 
 	if *Worker {
-		go runJupyter()
+		runJupyter()
 		log.Info("Bayesnote flow worker started")
+		//r.Run(":9000")
+	} else {
+		go tunnelWatcher()
+
+		log.Info("Bayesnote flow core started")
+
 		r.Run(":9000")
-		return
 	}
-
-	go tunnelWatcher()
-
-	log.Info("Bayesnote flow core started")
-
-	r.Run(":9000")
 }
 
 func runJupyter() {
-	cmd := exec.Command("sh", "-c", "jupyter notebook --ip='*' --NotebookApp.token='' --NotebookApp.password='' --allow-root")
+	//TODO: search all possible paths or let user input
+	cmd := exec.Command("/bin/bash", "-c", "jupyter notebook --ip='*' --NotebookApp.token='' --NotebookApp.password='' --allow-root")
+
+	log.Info("Start Jupyter server")
 	err := cmd.Run()
 	if err != nil {
 		log.Error(err)
