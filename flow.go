@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -55,7 +54,7 @@ type TaskRun struct {
 	Name      string
 	Path      string
 	Status    int
-	runCnt    int
+	RunCnt    int
 	Notebook  string
 }
 
@@ -80,7 +79,6 @@ func (f *Flow) run() {
 	//get tasks for flow run
 	var tasks []Task
 	db.Find(&tasks, "flow_id = ?", f.ID)
-	fmt.Println("tasks length: ", len(tasks))
 	r.setTasks(tasks) //Move this
 
 	//start
@@ -94,18 +92,13 @@ func (f *Flow) run() {
 // task -> taskrun
 func (r *FlowRun) setTasks(tasks []Task) {
 	for _, t := range tasks {
-		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, runCnt: 2, Status: READY}
+		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, RunCnt: 2, Status: READY}
 		db.Create(&tr)
 
 		//generate dep
 		if len(t.Next) > 0 {
 			db.Create(&dep{FlowRunID: r.ID, FlowName: t.FlowName, Parent: t.Name, Child: t.Next})
 		}
-	}
-
-	err := db.Model(r).Update("task_runs", r.TaskRuns).Error
-	if err != nil {
-		log.Error(err)
 	}
 
 	log.Info("Flow tasks set")
@@ -115,16 +108,22 @@ func (r *FlowRun) start() {
 	db.Model(r).Update("Status", RUNNING)
 	log.Info("Flow running")
 
-	for i := range r.TaskRuns {
-		r.TaskRuns[i].start()
+	var ts []TaskRun
+	db.Find(&ts, "flow_run_id = ?", r.ID)
+
+	for i := range ts {
+		ts[i].start()
 	}
 }
 
 func (r *FlowRun) status(done chan struct{}) {
 out:
 	for {
-		for i := range r.TaskRuns {
-			if r.TaskRuns[i].Status == FAIL {
+		var ts []TaskRun
+		db.Find(&ts, "flow_run_id = ?", r.ID)
+
+		for i := range ts {
+			if ts[i].Status == FAIL {
 				db.Model(r).Update("Status", FAIL)
 				log.Info("Flow run failed")
 				break out
@@ -146,7 +145,10 @@ out:
 }
 
 func (r FlowRun) done() bool {
-	for _, t := range r.TaskRuns {
+	var ts []TaskRun
+	db.Find(&ts, "flow_run_id = ?", r.ID)
+
+	for _, t := range ts {
 		if t.Status == READY || t.Status == RUNNING {
 			return false
 		}
@@ -181,7 +183,7 @@ func (t *TaskRun) delParent() {
 
 //TODO: refactor
 func (t *TaskRun) run() {
-	if t.runCnt == 0 {
+	if t.RunCnt == 0 {
 		t.Status = FAIL
 		db.Model(t).Update("status", FAIL)
 		log.WithFields(logrus.Fields{
@@ -190,7 +192,7 @@ func (t *TaskRun) run() {
 		return
 	}
 
-	t.runCnt--
+	t.RunCnt--
 	t.Status = RUNNING
 	db.Model(t).Update("status", RUNNING)
 
