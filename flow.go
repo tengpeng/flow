@@ -215,7 +215,11 @@ func (t *TaskRun) run() {
 		log.Error(err)
 	}
 
-	db.Model(t).Update("status", OK, "notebook", string(notebook))
+	//"status", OK,
+	err = db.Model(t).Update("notebook", string(notebook)).Error
+	if err != nil {
+		log.Error(err)
+	}
 	//TODO: remove temp notebook
 	t.delParent()
 }
