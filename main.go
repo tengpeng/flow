@@ -11,11 +11,14 @@ import (
 )
 
 var db *gorm.DB
+var p string
 
 //TODO: Add flag for dev
 func main() {
-	useWorker := flag.Bool("worker", false, "Start remote worker")
+	Worker := flag.Bool("worker", false, "Start remote worker")
+	Port := flag.String("port", "22", "Set SSH port")
 	flag.Parse()
+	p = *Port
 
 	os.Remove("flow.db")
 
@@ -23,7 +26,7 @@ func main() {
 	go flowWatcher()
 	r := server()
 
-	if *useWorker {
+	if *Worker {
 		go runJupyter()
 		log.Info("Bayesnote flow worker started")
 		r.Run(":9000")

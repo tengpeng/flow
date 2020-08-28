@@ -42,7 +42,7 @@ type Tunnel struct {
 
 //TODO: heartbeat
 func (t *Host) connect() (*ssh.Client, error) {
-	err := t.checkPort("32768")
+	err := t.checkPort(p)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +278,7 @@ func (t Host) newConfig() *ssh.ClientConfig {
 }
 
 func (t Host) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
-	client, err := ssh.Dial("tcp", t.IP+":"+"32768", config)
+	client, err := ssh.Dial("tcp", t.IP+":"+p, config)
 	if err != nil {
 		log.Error(err, t.IP, config.Config)
 		return nil, errors.New("SSH failed")
@@ -300,7 +300,7 @@ func (t Host) checkPort(port string) error {
 			return nil
 		}
 	}
-	return errors.New("Port 32768 is not OK")
+	return errors.New("Port is not OK")
 }
 
 func getFreePort() string {

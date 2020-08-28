@@ -73,7 +73,7 @@ func newTunnel(h Host, core bool) {
 
 	t := Tunnel{
 		HostID:     h.ID,
-		ServerAddr: h.IP + ":32768",
+		ServerAddr: h.IP + ":" + p,
 		LocalAddr:  localAddr,
 		RemoteAddr: RemoteAddr,
 	}
