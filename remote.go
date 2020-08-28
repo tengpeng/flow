@@ -21,10 +21,10 @@ import (
 
 type Host struct {
 	gorm.Model
-	Name     string `gorm:"unique;not null" json:"Name"`
-	User     string `gorm:"not null" json:"User"`
-	IP       string `gorm:"not null" json:"IP"`
-	Password string `json:"Password"` //TODO: Add check constraint
+	Name     string `gorm:"unique;not null"`
+	User     string `gorm:"not null"`
+	IP       string `gorm:"not null"`
+	Password string `json:"Password"`
 	Pem      string `json:"Pem"`
 	Tunnels  []Tunnel
 
@@ -40,6 +40,7 @@ type Tunnel struct {
 	Forwarded  bool
 }
 
+//TODO: heartbeat
 func (t *Host) connect() (*ssh.Client, error) {
 	err := t.checkPort("32768")
 	if err != nil {
@@ -58,8 +59,21 @@ func (t *Host) connect() (*ssh.Client, error) {
 	return client, nil
 }
 
-//TODO:
-func (t *Tunnel) Forward() {
+func (t *Host) deployBinary() error {
+	fileName := "flow"
+	remoteHome := t.getRemoteHome()
+	srcPath := filepath.Join(".", fileName)
+	destPath := filepath.Join(remoteHome, fileName)
+
+	t.runCommand("rm " + destPath)
+	t.copyFile(srcPath, destPath)
+	go t.runCommand(destPath + " -worker")
+	db.Model(t).Update("deployed = ?")
+
+	return nil
+}
+
+func (t *Tunnel) forward() {
 	var h Host
 	if db.First(&h, "id = ?", t.HostID).RecordNotFound() {
 		log.Error("Host not found")
@@ -71,64 +85,6 @@ func (t *Tunnel) Forward() {
 		log.Error(err)
 	}
 
-	go t.forward(client)
-}
-
-func (t *Host) deployBinary() error {
-	fileName := "flow"
-	remoteHome := t.getRemoteHome()
-	srcPath := filepath.Join(".", fileName)
-	destPath := filepath.Join(remoteHome, fileName)
-
-	//TODO:
-	// err := t.isJupyterOK()
-	// if err != nil {
-	// 	return err
-	// }
-
-	t.runCommand("rm "+destPath, false)
-	t.copyFile(srcPath, destPath)
-	go t.runCommand(destPath+" -worker", true)
-	//TODO: check if running
-	db.Model(t).Update("deployed = ?", true)
-
-	return nil
-}
-
-//TODO:
-func (t *Host) isJupyterOK() error {
-	_, err := t.runCommand("shell -c jupyter", false)
-	if err != nil {
-		log.Error("Jupyter is not installed")
-		return err
-	}
-	log.Info("Jupyter OK")
-	return nil
-}
-
-func (t *Host) getRemoteHome() string {
-	homeDir, err := t.runCommand("eval echo ~$USER", false)
-	if err != nil {
-		log.Error(err)
-	}
-	remoteHome := filepath.Join(homeDir)
-	log.Info("Remote home dir: ", homeDir)
-	return remoteHome
-}
-
-// func (t *Target) getRemotePort() {
-// 	p, err := t.runCommand("env | grep FLOW_PORT", false)
-// 	if err != nil {
-// 		log.Error(err)
-// 	}
-
-// 	t.remotePort = p
-// 	log.WithFields(logrus.Fields{
-// 		"port": p,
-// 	}).Info("Get remote work port")
-// }
-
-func (t *Tunnel) forward(sshClient *ssh.Client) {
 	localListener, err := net.Listen("tcp", t.LocalAddr)
 	if err != nil {
 		log.Error("net.Listen failed: %v", err)
@@ -140,8 +96,18 @@ func (t *Tunnel) forward(sshClient *ssh.Client) {
 			log.Error("listen.Accept failed: %v", err)
 		}
 
-		go t.copy(sshClient, localConn)
+		go t.copy(client, localConn)
 	}
+}
+
+func (t *Host) getRemoteHome() string {
+	homeDir, err := t.runCommand("eval echo ~$USER")
+	if err != nil {
+		log.Error(err)
+	}
+	remoteHome := filepath.Join(homeDir)
+	log.Info("Remote home dir: ", homeDir)
+	return remoteHome
 }
 
 //TODO: ssh: rejected: connect failed (Connection refused)
@@ -196,7 +162,6 @@ func (t *Host) copyFile(srcPath string, dstPath string) {
 		log.Error(err, srcPath)
 	}
 
-	//TODO:
 	go func() {
 		srcInfo, err := srcFile.Stat()
 		if err != nil {
@@ -205,6 +170,7 @@ func (t *Host) copyFile(srcPath string, dstPath string) {
 
 		count := int(srcInfo.Size())
 		bar := pb.StartNew(count)
+		bar.SetUnits(pb.MiB)
 		for {
 			if int(bar.Get()) < count {
 				dstInfo, err := dstFile.Stat()
@@ -239,7 +205,7 @@ func (t *Host) copyFile(srcPath string, dstPath string) {
 	}).Info("Copy file ")
 }
 
-func (t *Host) runCommand(cmd string, start bool) (string, error) {
+func (t *Host) runCommand(cmd string) (string, error) {
 	session, err := t.client.NewSession()
 	if err != nil {
 		log.Error(err)
@@ -255,12 +221,14 @@ func (t *Host) runCommand(cmd string, start bool) (string, error) {
 		return "", err
 	}
 
+	out := strings.TrimSuffix(string(b), "\n")
+
 	log.WithFields(logrus.Fields{
 		"cmd": cmd,
-		"out": strings.TrimSuffix(string(b), "\n"), //TODO
+		"out": out,
 	}).Info("Run command OK")
 
-	return strings.TrimSuffix(string(b), "\n"), nil
+	return out, nil
 }
 
 func (t Host) newClientPemConfig() *ssh.ClientConfig {

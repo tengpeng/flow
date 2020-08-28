@@ -91,7 +91,7 @@ func forward() {
 			continue
 		}
 
-		t.Forward()
+		t.forward()
 
 		db.Model(&t).Update("forwarded", true)
 
