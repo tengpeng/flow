@@ -11,11 +11,11 @@ import (
 
 type Cmd struct {
 	gorm.Model
-	TargetID string
-	Input    string
-	Output   string
-	Wait     bool //TODO: add to server
-	Status   int
+	HostID string
+	Input  string
+	Output string
+	Wait   bool //TODO: add to server
+	Status int
 }
 
 //TODO: error handling

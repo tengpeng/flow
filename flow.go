@@ -16,7 +16,7 @@ import (
 type Flow struct {
 	gorm.Model
 	FlowName string `gorm:"unique;not null" json:"FlowName"`
-	TargetID uint
+	HostID   uint
 	Schedule string `gorm:"not null" json:"Schedule"`
 	Status   string //used by db
 	Tasks    []Task `gorm:"ForeignKey:FlowID"`
@@ -43,7 +43,7 @@ type dep struct {
 type FlowRun struct {
 	gorm.Model
 	FlowID   uint
-	TargetID uint
+	HostID   uint
 	FlowName string
 	Time     time.Time
 	Status   int
@@ -71,7 +71,7 @@ func (f *Flow) run() {
 	done := make(chan struct{})
 
 	//create flow run
-	db.Create(&FlowRun{FlowID: f.ID, TargetID: f.TargetID, FlowName: f.FlowName, Time: time.Now(), Status: READY})
+	db.Create(&FlowRun{FlowID: f.ID, HostID: f.HostID, FlowName: f.FlowName, Time: time.Now(), Status: READY})
 	log.Info("Flow run created")
 
 	//get flow run
