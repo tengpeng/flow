@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"os"
 	"os/exec"
 	"time"
 
@@ -19,7 +18,7 @@ func main() {
 	useWorker := flag.Bool("worker", false, "Start remote worker")
 	flag.Parse()
 
-	os.Remove("flow.db")
+	//os.Remove("flow.db")
 
 	initDB()
 	go watchNewFlow()
@@ -51,7 +50,6 @@ func Forward() {
 	}
 }
 
-//TODO: Why forward 2
 func forward() {
 	var t Tunnel
 	if db.First(&t, "forwarded = ?", false).RecordNotFound() {
@@ -63,8 +61,8 @@ func forward() {
 	db.Model(&t).Update("forwarded", true)
 
 	log.WithFields(logrus.Fields{
-		"remote": t.HostID,
-	}).Info("Start forwarding for db")
+		"IP": t.RemoteAddr,
+	}).Info("Start forwarding")
 }
 
 func runJupyter() {
@@ -74,6 +72,5 @@ func runJupyter() {
 		log.Error(err)
 	}
 }
-
 
 //TODO: kill ->
