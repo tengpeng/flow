@@ -14,7 +14,7 @@ func tunnelWatcher() {
 
 	//set up core + jupyter tunnel
 	go watchCoreTunnel()
-	go Forward()
+	go forward()
 
 }
 
@@ -56,7 +56,7 @@ func newTunnel(h Host, core bool) {
 
 //TODO: check if remote running
 //TODO: add status update check heartbeat for remote
-func Forward() {
+func forward() {
 	for {
 		time.Sleep(time.Second)
 

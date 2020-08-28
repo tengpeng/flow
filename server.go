@@ -11,9 +11,9 @@ func server() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
-	//TODO:
+
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"*"},
+		AllowOrigins: []string{"localhost"},
 	}))
 
 	//all
@@ -103,7 +103,6 @@ func newNotebook(c *gin.Context) {
 	c.JSON(200, nil)
 }
 
-//TODO: or update
 func newFlow(c *gin.Context) {
 	var f Flow
 	err := c.BindJSON(&f)
@@ -123,11 +122,10 @@ func newFlow(c *gin.Context) {
 	})
 }
 
-//TODO:
 func getFlows(c *gin.Context) {
-	var f Flow
-	db.First(&f, 1)
-	c.JSON(http.StatusOK, f)
+	var fs []Flow
+	db.Find(&fs)
+	c.JSON(http.StatusOK, fs)
 }
 
 func getRuns(c *gin.Context) {
