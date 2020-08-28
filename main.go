@@ -25,7 +25,6 @@ func main() {
 	r := server()
 
 	if *useWorker {
-		go watchCmd()
 		go runJupyter()
 		log.Info("Bayesnote flow worker started")
 		r.Run(":9000")

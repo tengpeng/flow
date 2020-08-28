@@ -33,5 +33,5 @@ func initialMigration() {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&Flow{}, &Host{}, &Task{}, &dep{}, FlowRun{}, &TaskRun{}, &Cmd{}, &Tunnel{})
+	db.AutoMigrate(&Flow{}, &Host{}, &Task{}, &dep{}, FlowRun{}, &TaskRun{}, &Tunnel{})
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 )
 
 func server() *gin.Engine {
@@ -19,7 +18,6 @@ func server() *gin.Engine {
 
 	//all
 	r.GET("/ping", ping)
-	r.POST("/cmd/:input", newCMD)
 	//TODO: upload/download files
 
 	//local only
@@ -127,7 +125,6 @@ func newFlow(c *gin.Context) {
 func getFlows(c *gin.Context) {
 	var f Flow
 	db.First(&f, 1)
-	//db.Preload("Tasks").First(&f)
 	c.JSON(http.StatusOK, f)
 }
 
@@ -135,20 +132,4 @@ func getRuns(c *gin.Context) {
 	var runs []FlowRun
 	db.Find(&runs)
 	c.JSON(http.StatusOK, runs)
-}
-
-func newCMD(c *gin.Context) {
-	input := c.Param("input")
-	command := Cmd{Input: input}
-
-	err := db.Create(&command).Error
-	if err != nil {
-		log.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"message": "OK",
-	})
 }
