@@ -22,6 +22,7 @@ func server() *gin.Engine {
 	//local only
 	r.POST("/hosts", newHost)
 	r.POST("/hosts/:name", newDeployment)
+	r.POST("/notebooks/:name", newNotebook)
 
 	//core (= centralized db)
 	r.POST("/flows", newFlow)
@@ -86,6 +87,20 @@ func newDeployment(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "New deployment OK",
 	})
+}
+
+func newNotebook(c *gin.Context) {
+	name := c.Param("name")
+
+	var h Host
+	if db.First(&h, "name = ?", name).RecordNotFound() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": name + " not found"})
+		return
+	}
+
+	newTunnel(h, false)
+
+	c.JSON(200, nil)
 }
 
 //TODO: or update

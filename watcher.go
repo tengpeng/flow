@@ -27,17 +27,28 @@ func watchCoreTunnel() {
 			continue
 		}
 
-		newTunnel(h, "127.0.0.1:9000")
+		newTunnel(h, true)
 		break
 	}
 }
 
-//TODO: called by server to add Jupyter
-func newTunnel(h Host, RemoteAddr string) {
+//TODO: called by server to add Jupyter. Core fixed. Jupyter flexible
+func newTunnel(h Host, core bool) {
+	var localAddr string
+	var RemoteAddr string
+	if core {
+		localAddr = "127.0.0.1:8000"
+		RemoteAddr = "127.0.0.1:9000"
+
+	} else {
+		localAddr = "127.0.0.1:" + getFreePort()
+		RemoteAddr = "127.0.0.1:8888"
+	}
+
 	t := Tunnel{
 		HostID:     h.ID,
 		ServerAddr: h.IP + ":32768",
-		LocalAddr:  "127.0.0.1:8000", //TODO: get free port
+		LocalAddr:  localAddr,
 		RemoteAddr: RemoteAddr,
 	}
 	db.Save(&t)
@@ -59,7 +70,7 @@ func Forward() {
 		db.Model(&t).Update("forwarded", true)
 
 		log.WithFields(logrus.Fields{
-			"RemoteAddr": t.RemoteAddr,
+			"LocalAddr": t.LocalAddr,
 		}).Info("Start forwarding")
 
 	}
