@@ -20,7 +20,7 @@ func main() {
 	os.Remove("flow.db")
 
 	initDB()
-	go watchNewFlow()
+	go flowWatcher()
 	r := server()
 
 	if *useWorker {
