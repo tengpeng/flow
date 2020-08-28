@@ -90,6 +90,12 @@ func (t *Tunnel) forward() {
 		log.Error("net.Listen failed: %v", err)
 	}
 
+	defer func() {
+		if r := recover(); r != nil {
+			log.Info("Recovered in f", r)
+		}
+	}()
+
 	for {
 		localConn, err := localListener.Accept()
 		if err != nil {
@@ -98,16 +104,6 @@ func (t *Tunnel) forward() {
 
 		go t.copy(client, localConn)
 	}
-}
-
-func (t *Host) getRemoteHome() string {
-	homeDir, err := t.runCommand("eval echo ~$USER")
-	if err != nil {
-		log.Error(err)
-	}
-	remoteHome := filepath.Join(homeDir)
-	log.Info("Remote home dir: ", homeDir)
-	return remoteHome
 }
 
 //TODO: ssh: rejected: connect failed (Connection refused)
@@ -312,4 +308,14 @@ func getFreePort() string {
 	l, _ := net.ListenTCP("tcp", addr)
 	defer l.Close()
 	return strconv.Itoa(l.Addr().(*net.TCPAddr).Port)
+}
+
+func (t *Host) getRemoteHome() string {
+	homeDir, err := t.runCommand("eval echo ~$USER")
+	if err != nil {
+		log.Error(err)
+	}
+	remoteHome := filepath.Join(homeDir)
+	log.Info("Remote home dir: ", homeDir)
+	return remoteHome
 }
