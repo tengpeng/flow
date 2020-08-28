@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"time"
 
@@ -11,22 +13,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-//TODO: remove json tag ?
 type Flow struct {
 	gorm.Model
-	FlowName string `gorm:"unique;not null" json:"FlowName"`
-	HostID   uint   //TODO
-	Schedule string `gorm:"not null" json:"Schedule"`
+	FlowName string `gorm:"not null"` //TODO: unique across two columns
+	HostID   uint   `gorm:"not null"`
+	Schedule string `gorm:"not null"`
 	Status   string //used by db
-	Tasks    []Task //`gorm:"ForeignKey:FlowID"`
+	Tasks    []Task
 }
 
 type Task struct {
 	gorm.Model
 	FlowID   uint
-	FlowName string `gorm:"not null" json:"FlowName"`
-	Name     string `gorm:"not null" json:"Name"`
-	Path     string `gorm:"not null" json:"Path"`
+	FlowName string `gorm:"not null"`
+	Name     string `gorm:"not null"`
+	Path     string `gorm:"not null"`
 	Content  string
 	Next     string `json:"Next"`
 }
@@ -46,7 +47,7 @@ type FlowRun struct {
 	FlowName string
 	Time     time.Time
 	Status   int
-	TaskRuns []TaskRun `gorm:"ForeignKey:FlowRunID"` //TODO: why null
+	TaskRuns []TaskRun
 }
 
 type TaskRun struct {
@@ -79,6 +80,7 @@ func (f *Flow) run() {
 	//get tasks for flow run
 	var tasks []Task
 	db.Find(&tasks, "flow_id = ?", f.ID)
+	fmt.Println("tasks length: ", len(tasks))
 	r.setTasks(tasks) //Move this
 
 	//start
@@ -95,17 +97,15 @@ func (r *FlowRun) setTasks(tasks []Task) {
 		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, runCnt: 2, Status: READY}
 		db.Create(&tr)
 
-		r.TaskRuns = append(r.TaskRuns, tr)
-
 		//generate dep
 		if len(t.Next) > 0 {
 			db.Create(&dep{FlowRunID: r.ID, FlowName: t.FlowName, Parent: t.Name, Child: t.Next})
 		}
+	}
 
-		err := db.Save(&r).Error
-		if err != nil {
-			log.Error(err)
-		}
+	err := db.Model(r).Update("task_runs", r.TaskRuns).Error
+	if err != nil {
+		log.Error(err)
 	}
 
 	log.Info("Flow tasks set")
@@ -206,22 +206,32 @@ func (t *TaskRun) run() {
 	}
 
 	t.Status = OK
-	log.WithFields(logrus.Fields{
-		"task": t.Name,
-	}).Info("Task run OK")
 
 	notebook, err := ioutil.ReadFile(oPath)
 	if err != nil {
 		log.Error(err)
 	}
 
-	//"status", OK,
-	err = db.Model(t).Update("notebook", string(notebook)).Error
+	if len(notebook) == 0 {
+		log.Error("Notebook empty")
+	}
+
+	err = os.Remove(oPath)
+	if err != nil {
+		log.Error("Failed to remove temp notebook")
+	}
+	t.Notebook = string(notebook)
+
+	db.Model(&t).Updates(TaskRun{Status: t.Status, Notebook: t.Notebook})
 	if err != nil {
 		log.Error(err)
 	}
-	//TODO: remove temp notebook
+
 	t.delParent()
+
+	log.WithFields(logrus.Fields{
+		"task": t.Name,
+	}).Info("Task run OK")
 }
 
 //TODO: add all existing flows to cron when restarted
