@@ -34,11 +34,10 @@ type Host struct {
 type Tunnel struct {
 	gorm.Model
 	HostID     uint
-	LocalAddr  string `gorm:unique;not null"`
+	LocalAddr  string `gorm:"unique;not null"`
 	ServerAddr string `gorm:"not null"`
 	RemoteAddr string `gorm:"not null"`
-	// Deployed   bool
-	Forwarded bool
+	Forwarded  bool
 }
 
 func (t *Host) connect() (*ssh.Client, error) {

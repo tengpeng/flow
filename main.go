@@ -2,12 +2,11 @@ package main
 
 import (
 	"flag"
+	"os"
 	"os/exec"
-	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,7 +17,7 @@ func main() {
 	useWorker := flag.Bool("worker", false, "Start remote worker")
 	flag.Parse()
 
-	//os.Remove("flow.db")
+	os.Remove("flow.db")
 
 	initDB()
 	go watchNewFlow()
@@ -30,38 +29,11 @@ func main() {
 		r.Run(":9000")
 	}
 
-	go Forward()
+	go tunnelWatcher()
 
 	log.Info("Bayesnote flow core started")
 
 	r.Run(":9000")
-}
-
-//TODO: check if remote running
-func Forward() {
-	//set all forward to false
-	var ts []Tunnel
-	db.Model(&ts).Update("Forwarded", false)
-
-	for {
-		forward()
-		time.Sleep(time.Second)
-	}
-}
-
-func forward() {
-	var t Tunnel
-	if db.First(&t, "forwarded = ?", false).RecordNotFound() {
-		return
-	}
-
-	t.Forward()
-
-	db.Model(&t).Update("forwarded", true)
-
-	log.WithFields(logrus.Fields{
-		"RemoteAddr": t.RemoteAddr,
-	}).Info("Start forwarding")
 }
 
 func runJupyter() {
@@ -71,5 +43,3 @@ func runJupyter() {
 		log.Error(err)
 	}
 }
-
-//TODO: kill ->

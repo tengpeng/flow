@@ -18,16 +18,14 @@ func server() *gin.Engine {
 
 	//all
 	r.GET("/ping", ping)
-	//TODO: upload/download files
 
 	//local only
 	r.POST("/hosts", newHost)
 	r.POST("/hosts/:name", newDeployment)
 
 	//core (= centralized db)
-	r.POST("/flows", newFlow) //TODO: how to handle notebook path
-	r.GET("/flows", getFlows) //TODO:
-	r.POST("/tasks")          //TODO:
+	r.POST("/flows", newFlow)
+	r.GET("/flows", getFlows)
 	r.GET("/runs", getRuns)
 
 	return r
@@ -40,61 +38,50 @@ func ping(c *gin.Context) {
 }
 
 func newHost(c *gin.Context) {
-	var t Host
-	err := c.BindJSON(&t)
+	var h Host
+	err := c.BindJSON(&h)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = db.Create(&t).Error
+	_, err = h.connect()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = db.Create(&h).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(200, gin.H{
-		"message": "New target created",
+		"message": "New host created",
 	})
 }
 
 func newDeployment(c *gin.Context) {
 	name := c.Param("name")
+
 	var h Host
-	db.First(&h, "name = ?", name)
-	if h.IP == "" {
+	if db.First(&h, "name = ?", name).RecordNotFound() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": name + " not found"})
 		return
 	}
 
-	h.connect()
-	err := h.deployBinary()
+	_, err := h.connect()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	db.Save(&h)
 
-	//Set core
-	var hs []Host
-	db.Find(&hs)
-
-	if len(hs) == 1 {
-		var t Tunnel
-		t.HostID = h.ID
-		t.ServerAddr = h.IP + ":32768"
-		t.LocalAddr = "127.0.0.1:8000"  //turn this on when env=prod getFreePort()
-		t.RemoteAddr = "127.0.0.1:9000" //Get freeport -> write to env var -> read remote env
-		db.Save(&t)
+	err = h.deployBinary()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
-
-	//jupyter
-	var t Tunnel
-	t.HostID = h.ID
-	t.ServerAddr = h.IP + ":32768"
-	t.LocalAddr = "127.0.0.1:8001"  //turn this on when env=prod getFreePort()
-	t.RemoteAddr = "127.0.0.1:8888" //Get freeport -> write to env var -> read remote env
-	db.Save(&t)
 
 	c.JSON(200, gin.H{
 		"message": "New deployment OK",
