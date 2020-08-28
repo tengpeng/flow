@@ -3,7 +3,6 @@ package main
 import (
 	"io/ioutil"
 	"os/exec"
-	"path/filepath"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -16,7 +15,7 @@ import (
 type Flow struct {
 	gorm.Model
 	FlowName string `gorm:"unique;not null" json:"FlowName"`
-	HostID   uint
+	HostID   uint   //TODO
 	Schedule string `gorm:"not null" json:"Schedule"`
 	Status   string //used by db
 	Tasks    []Task `gorm:"ForeignKey:FlowID"`
@@ -47,8 +46,7 @@ type FlowRun struct {
 	FlowName string
 	Time     time.Time
 	Status   int
-	TaskRuns []TaskRun
-	Polled   bool
+	TaskRuns []TaskRun //TODO: why null
 }
 
 type TaskRun struct {
@@ -191,7 +189,7 @@ func (t *TaskRun) run() {
 	db.Model(t).Update("status", RUNNING)
 
 	out := "temp" + "-" + t.Name
-	oPath := filepath.Join("data", out+".ipynb")
+	oPath := out + ".ipynb"
 	cmd := exec.Command("jupyter", "nbconvert", "--to", "notebook",
 		"--output", out, "--execute", t.Path, "--ExecutePreprocessor.timeout=3600")
 	err := cmd.Run()
@@ -212,6 +210,7 @@ func (t *TaskRun) run() {
 	}
 
 	db.Model(t).Update("status", OK, "notebook", string(notebook))
+	//TODO: remove temp notebook
 	t.delParent()
 }
 

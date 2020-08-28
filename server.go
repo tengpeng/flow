@@ -20,6 +20,7 @@ func server() *gin.Engine {
 	//all
 	r.GET("/ping", ping)
 	r.POST("/cmd/:input", newCMD)
+	//TODO: upload/download files
 
 	//local only
 	r.POST("/hosts", newHost)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"os"
 	"os/exec"
 	"time"
 
@@ -18,7 +19,7 @@ func main() {
 	useWorker := flag.Bool("worker", false, "Start remote worker")
 	flag.Parse()
 
-	//os.Remove("flow.db")
+	os.Remove("flow.db")
 
 	initDB()
 	go watchNewFlow()
@@ -61,7 +62,7 @@ func forward() {
 	db.Model(&t).Update("forwarded", true)
 
 	log.WithFields(logrus.Fields{
-		"IP": t.RemoteAddr,
+		"RemoteAddr": t.RemoteAddr,
 	}).Info("Start forwarding")
 }
 

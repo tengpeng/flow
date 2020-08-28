@@ -34,7 +34,7 @@ type Host struct {
 type Tunnel struct {
 	gorm.Model
 	HostID     uint
-	LocalAddr  string `gorm:"not null"`
+	LocalAddr  string `gorm:unique;not null"`
 	ServerAddr string `gorm:"not null"`
 	RemoteAddr string `gorm:"not null"`
 	// Deployed   bool
@@ -147,6 +147,7 @@ func (t *Tunnel) forward(sshClient *ssh.Client) {
 
 //TODO: ssh: rejected: connect failed (Connection refused)
 //TODO: ssh: unexpected packet in response to channel open: <nil>
+//TODO: ERRO[0181] io.Copy failed: %vreadfrom tcp 127.0.0.1:8001->127.0.0.1:53145: write tcp 127.0.0.1:8001->127.0.0.1:53145: write: broken pipe
 func (t *Tunnel) copy(sshClient *ssh.Client, localConn net.Conn) {
 	sshConn, err := sshClient.Dial("tcp", t.RemoteAddr)
 	if err != nil {
