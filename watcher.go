@@ -93,7 +93,7 @@ func forward() {
 		go t.forward()
 
 		if t.LocalAddr != "127.0.0.1:8000" {
-			openBrowser(t.LocalAddr)
+			go openBrowser(t.LocalAddr) //TODO:
 
 			log.WithFields(logrus.Fields{
 				"IP": t.LocalAddr,

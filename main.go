@@ -95,7 +95,7 @@ func lookJupyter() (string, error) {
 	}
 
 	if path != "" {
-		ioutil.WriteFile("jupyterPath", []byte(path), 0644) //TODO: find better method to save path
+		ioutil.WriteFile("flow.env", []byte(path), 0644)
 		return path, nil
 	}
 
