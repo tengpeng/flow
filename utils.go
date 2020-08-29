@@ -4,12 +4,17 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func openBrowser(url string) {
 	var err error
+
+	time.Sleep(time.Second)
+
+	url = "http://" + url
 
 	switch runtime.GOOS {
 	case "linux":
