@@ -1589,6 +1589,13 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
+"@types/jest@^24.0.0":
+  version "24.9.1"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-24.9.1.tgz#02baf9573c78f1b9974a5f36778b366aa77bd534"
+  integrity sha512-Fb38HkXSVA4L8fGKEZ6le5bB8r6MRWlOCZbVuWZcmOMSCd2wCYOwN1ibj8daIoV9naq7aaOZjrLCoCMptKU/4Q==
+  dependencies:
+    jest-diff "^24.3.0"
+
 "@types/json-schema@^7.0.3":
   version "7.0.4"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.4.tgz#38fd73ddfd9b55abb1e1b2ed578cb55bd7b7d339"
@@ -1609,6 +1616,11 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.9.2.tgz#ace1880c03594cc3e80206d96847157d8e7fa349"
   integrity sha512-bnoqK579sAYrQbp73wwglccjJ4sfRdKU7WNEZ5FW4K2U6Kc0/eZ5kvXG0JKsEKFB50zrFmfFt52/cvBbZa7eXg==
 
+"@types/node@^12.0.0":
+  version "12.12.54"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.12.54.tgz#a4b58d8df3a4677b6c08bfbc94b7ad7a7a5f82d1"
+  integrity sha512-ge4xZ3vSBornVYlDnk7yZ0gK6ChHf/CHB7Gl1I0Jhah8DDnEQqBzgohYG4FX4p81TNirSETOiSyn+y1r9/IR6w==
+
 "@types/parse-json@^4.0.0":
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@types/parse-json/-/parse-json-4.0.0.tgz#2f8bb441434d163b35fb8ffdccd7138927ffb8c0"
@@ -1624,14 +1636,14 @@
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
   integrity sha512-ce5d3q03Ex0sy4R14722Rmt6MT07Ua+k4FwDfdcToYJcMKNtRVQvJ6JCAPdAmAnbRb6CsX6aYb9m96NGod9uTw==
 
-"@types/react-dom@*":
+"@types/react-dom@*", "@types/react-dom@^16.9.0":
   version "16.9.8"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-16.9.8.tgz#fe4c1e11dfc67155733dfa6aa65108b4971cb423"
   integrity sha512-ykkPQ+5nFknnlU6lDd947WbQ6TE3NNzbQAkInC2EKY1qeYdTKp7onFusmYZb+ityzx2YviqT6BXSu+LyWWJwcA==
   dependencies:
     "@types/react" "*"
 
-"@types/react@*":
+"@types/react@*", "@types/react@^16.9.0":
   version "16.9.48"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-16.9.48.tgz#d3387329f070d1b1bc0ff4a54a54ceefd5a8485c"
   integrity sha512-4ykBVswgYitPGMXFRxJCHkxJDU2rjfU3/zw67f8+dB7sNdVJXsrwqoYxz/stkAucymnEEbRPFmX7Ce5Mc/kJCw==
@@ -5874,7 +5886,7 @@ jest-config@^24.9.0:
     pretty-format "^24.9.0"
     realpath-native "^1.1.0"
 
-jest-diff@^24.0.0, jest-diff@^24.9.0:
+jest-diff@^24.0.0, jest-diff@^24.3.0, jest-diff@^24.9.0:
   version "24.9.0"
   resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-24.9.0.tgz#931b7d0d5778a1baf7452cb816e325e3724055da"
   integrity sha512-qMfrTs8AdJE2iqrTp0hzh7kTd2PQWrsFyj9tORoKmu32xjPjeE4NyjVRDz8ybYwqS2ik8N4hsIpiVTyFeo2lBQ==
@@ -8462,7 +8474,7 @@ prompts@^2.0.1:
     kleur "^3.0.3"
     sisteransi "^1.0.4"
 
-prop-types@^15.5.4, prop-types@^15.6.1, prop-types@^15.6.2, prop-types@^15.7.2:
+prop-types@^15.6.1, prop-types@^15.6.2, prop-types@^15.7.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
@@ -8766,22 +8778,6 @@ react-scripts@3.4.3:
     workbox-webpack-plugin "4.3.1"
   optionalDependencies:
     fsevents "2.1.2"
-
-react-split-pane@^0.1.92:
-  version "0.1.92"
-  resolved "https://registry.yarnpkg.com/react-split-pane/-/react-split-pane-0.1.92.tgz#68242f72138aed95dd5910eeb9d99822c4fc3a41"
-  integrity sha512-GfXP1xSzLMcLJI5BM36Vh7GgZBpy+U/X0no+VM3fxayv+p1Jly5HpMofZJraeaMl73b3hvlr+N9zJKvLB/uz9w==
-  dependencies:
-    prop-types "^15.7.2"
-    react-lifecycles-compat "^3.0.4"
-    react-style-proptype "^3.2.2"
-
-react-style-proptype@^3.2.2:
-  version "3.2.2"
-  resolved "https://registry.yarnpkg.com/react-style-proptype/-/react-style-proptype-3.2.2.tgz#d8e998e62ce79ec35b087252b90f19f1c33968a0"
-  integrity sha512-ywYLSjNkxKHiZOqNlso9PZByNEY+FTyh3C+7uuziK0xFXu9xzdyfHwg4S9iyiRRoPCR4k2LqaBBsWVmSBwCWYQ==
-  dependencies:
-    prop-types "^15.5.4"
 
 react-transition-group@^2.9.0:
   version "2.9.0"
@@ -10289,6 +10285,11 @@ typedarray@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
+
+typescript@~3.7.2:
+  version "3.7.5"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.5.tgz#0692e21f65fd4108b9330238aac11dd2e177a1ae"
+  integrity sha512-/P5lkRXkWHNAbcJIiHPfRoKqyd7bsyCma1hZNUGfn20qm64T6ZBlrzprymeu918H+mB/0rIg2gGK/BXkhhYgBw==
 
 unicode-canonical-property-names-ecmascript@^1.0.4:
   version "1.0.4"
