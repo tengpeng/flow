@@ -1,5 +1,6 @@
-import { Button, ControlGroup, Divider, FormGroup, InputGroup, ProgressBar, Tab, Tabs } from "@blueprintjs/core";
+import { Button, ControlGroup, Divider, FormGroup, InputGroup, Tab, Tabs } from "@blueprintjs/core";
 import React, { useEffect, useState } from "react";
+import { AppToaster } from "./toasters";
 
 const baseURL = "http://127.0.0.1:9000"
 
@@ -22,8 +23,6 @@ const AddHost: React.FC = () => {
     const [user, setUser] = useState("")
     const [password, setPassword] = useState("")
     const [pem, setPem] = useState("")
-    const [saveResult, setSaveResult] = useState("")
-    const [installResult, setInstallResult] = useState("")
     const [showProgressBar, setShowProgressBar] = useState(false)
 
     const handleSave = () => {
@@ -35,12 +34,6 @@ const AddHost: React.FC = () => {
             "Pem": pem
         }
 
-        // const host = {
-        //     "User": "root",
-        //     "IP": "0.0.0.0",
-        //     "Password": "z",
-        // }
-
         fetch(url,
             {
                 method: 'post',
@@ -49,9 +42,9 @@ const AddHost: React.FC = () => {
             .then(response => response.json())
             .then(result => {
                 if (result.error != null) {
-                    setSaveResult(result.error)
+                    showToast(result.error)
                 } else {
-                    setSaveResult(result.message)
+                    showToast(result.message)
                 }
             })
             .catch(error => {
@@ -71,9 +64,9 @@ const AddHost: React.FC = () => {
             .then(response => response.json())
             .then(result => {
                 if (result.error != null) {
-                    setInstallResult(result.error)
+                    showToast(result.error)
                 } else {
-                    setInstallResult(result.message)
+                    showToast(result.message)
                 }
             })
             .catch(error => {
@@ -85,8 +78,12 @@ const AddHost: React.FC = () => {
 
     useEffect(() => {
         setShowProgressBar(false)
-    }, [installResult])
+    }, [])
 
+    //TODO: add progress bar
+    const showToast = (msg: string) => {
+        AppToaster.show({ message: msg, intent: "primary" });
+    }
 
     return (
         <div className="add-host" style={{ width: "25%" }}>
@@ -140,14 +137,10 @@ const AddHost: React.FC = () => {
                 <Divider />
                 <h3>2. Save: </h3>
 
-                <h5>Result: {saveResult} </h5>
 
                 <Button text="Save" onClick={handleSave} />
 
                 <h3>3. Install: </h3>
-                <h5>Result: {installResult} </h5>
-
-                <ProgressBar value={showProgressBar ? 100 : 0} />
 
                 <Button text="Install" onClick={handleInstall} />
 
