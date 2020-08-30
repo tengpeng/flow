@@ -80,13 +80,13 @@ const AddHost: React.FC = () => {
         setShowProgressBar(false)
     }, [])
 
-    //TODO: add progress bar
+    //TODO: add progress bar    
     const showToast = (msg: string) => {
         AppToaster.show({ message: msg, intent: "primary" });
     }
 
     return (
-        <div className="add-host" style={{ width: "25%" }}>
+        <div className="add-host">
 
             <ControlGroup fill={false} vertical={true}>
 

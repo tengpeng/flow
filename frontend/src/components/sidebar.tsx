@@ -1,12 +1,15 @@
-import { Tab, Tabs } from "@blueprintjs/core";
-import React from "react";
+import { Tab, TabId, Tabs } from "@blueprintjs/core";
+import React, { useState } from "react";
+import { Flow } from "./flows";
+import { Host } from "./hosts";
 
 export const Sidebar: React.FC = () => {
+    const [id, setID] = useState<TabId>("flow")
 
     return (
-        <Tabs vertical={true}>
-            <Tab id="Remote" title="Remote" />
-            <Tab id="Flow" title="Flow" />
+        <Tabs vertical={true} selectedTabId={id} onChange={(newTabId: TabId) => setID(newTabId)}>
+            <Tab title="host" id="host" panel={<Host />} />
+            <Tab title="flow" id="flow" panel={<Flow />} />
         </Tabs>
     )
 }
