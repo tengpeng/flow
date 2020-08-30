@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,14 +11,25 @@ func server() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
-
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://localhost:3000"},
+		// AllowMethods:     []string{"PUT", "PATCH"},
+		// AllowHeaders:     []string{"Origin"},
+		// ExposeHeaders:    []string{"Content-Length"},
+		// AllowCredentials: true,
+		// AllowOriginFunc: func(origin string) bool {
+		// 	return origin == "https://github.com"
+		// },
+		// MaxAge: 12 * time.Hour,
+	}))
 	//all
 	r.GET("/ping", ping)
 
 	//local only
 	r.POST("/hosts", newHost)
-	r.POST("/hosts/:name", newDeployment)
-	r.POST("/notebooks/:name", newNotebook)
+	r.GET("/hosts", allHosts)
+	r.POST("/hosts/:ip", newDeployment)
+	r.POST("/notebooks/:ip", newNotebook)
 
 	//core (= centralized db)
 	r.POST("/flows", newFlow)
@@ -25,6 +37,12 @@ func server() *gin.Engine {
 	r.GET("/runs", getRuns)
 
 	return r
+}
+
+func allHosts(c *gin.Context) {
+	var hs []Host
+	db.Find(&hs)
+	c.JSON(200, hs)
 }
 
 func ping(c *gin.Context) {
@@ -59,11 +77,11 @@ func newHost(c *gin.Context) {
 }
 
 func newDeployment(c *gin.Context) {
-	name := c.Param("name")
+	ip := c.Param("ip")
 
 	var h Host
-	if db.First(&h, "name = ?", name).RecordNotFound() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": name + " not found"})
+	if db.First(&h, "ip = ?", ip).RecordNotFound() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": ip + " not found"})
 		return
 	}
 
@@ -85,17 +103,19 @@ func newDeployment(c *gin.Context) {
 }
 
 func newNotebook(c *gin.Context) {
-	name := c.Param("name")
+	ip := c.Param("ip")
 
 	var h Host
-	if db.First(&h, "name = ?", name).RecordNotFound() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": name + " not found"})
+	if db.First(&h, "ip = ?", ip).RecordNotFound() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": ip + " not found"})
 		return
 	}
 
 	newTunnel(h, false)
 
-	c.JSON(200, nil)
+	c.JSON(200, gin.H{
+		"message": "Open new notebook OK",
+	})
 }
 
 func newFlow(c *gin.Context) {

@@ -4,8 +4,9 @@ import React from "react";
 export const Sidebar: React.FC = () => {
 
     return (
-        <Tabs>
+        <Tabs vertical={true}>
             <Tab id="Remote" title="Remote" />
+            <Tab id="Flow" title="Flow" />
         </Tabs>
     )
 }

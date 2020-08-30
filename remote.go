@@ -21,9 +21,8 @@ import (
 
 type Host struct {
 	gorm.Model
-	Name     string `gorm:"unique;not null"`
 	User     string `gorm:"not null"`
-	IP       string `gorm:"not null"`
+	IP       string `gorm:"unique:not null"`
 	Password string `json:"Password"`
 	Pem      string `json:"Pem"`
 	Tunnels  []Tunnel
@@ -284,7 +283,7 @@ func (t Host) dial(config *ssh.ClientConfig) (*ssh.Client, error) {
 
 func (t Host) checkPort(port string) error {
 	for i := 0; i < 10; i++ {
-		time.Sleep(time.Second)
+		time.Sleep(200 * time.Millisecond)
 		conn, err := net.DialTimeout("tcp", net.JoinHostPort(t.IP, port), time.Second)
 		if err != nil {
 			log.Error("CheckPorts failed:", err)
@@ -294,7 +293,7 @@ func (t Host) checkPort(port string) error {
 			return nil
 		}
 	}
-	return errors.New("Port is not OK")
+	return errors.New("Failed to dial")
 }
 
 func getFreePort() string {
