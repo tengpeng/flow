@@ -11,11 +11,11 @@ function App() {
                 <Sidebar />
             </div>
 
-            <SplitPane split="vertical" defaultSize="15%" pane2Style={{ overflow: 'scroll' }} style={{ position: 'relative' }}>
-                <div className="Panel-2" style={{ maxHeight: "80%" }}>
+            <SplitPane split="vertical" defaultSize="15%" >
+                <div className="Panel-2" >
                 </div>
 
-                <div className="Panel-3" style={{ overflowY: "scroll" }}>
+                <div className="Panel-3">
                     <Host />
                 </div>
 

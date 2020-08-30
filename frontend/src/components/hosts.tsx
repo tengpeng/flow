@@ -1,12 +1,7 @@
 import { Button, FormGroup, InputGroup, Tab, Tabs } from "@blueprintjs/core";
-import { Cell, Column, Table } from "@blueprintjs/table";
 import React, { useState } from "react";
+import { useTable } from 'react-table';
 
-/*
-Hosts:
-    - Add new host
-    - Host list
-*/
 export const Host: React.FC = () => {
 
 
@@ -24,12 +19,78 @@ export const Host: React.FC = () => {
 }
 
 const HostList: React.FC = () => {
-    const cellRenderer = (rowIndex: number) => <Cell>{`$${(rowIndex * 10).toFixed(2)}`}</Cell>;
+    // const cellRenderer = (rowIndex: number) => <Cell>{`$${(rowIndex * 10).toFixed(2)}`}</Cell>;
+    // const cellRenderer = (rowIndex: number) => {
+    //     return <Cell>{`$${(rowIndex * 10).toFixed(2)}`}</Cell>
+    // }
+
+    const [data, setData] = useState([{ ip: "123.456.789", actions: <Button text="Ping" icon="add" /> }] as any)
+
+    const handleClick = () => {
+
+    }
+
+    const columns = [
+        {
+            Header: 'IP',
+            accessor: 'ip',
+        },
+        {
+            Header: 'Actions',
+            accessor: 'action',
+            Cell: () => (
+                <div>
+                    <button onClick={() => handleClick()}>New notebook</button>
+                </div>
+            )
+        }
+    ];
+
+
+
+    const {
+        getTableProps,
+        getTableBodyProps,
+        headerGroups,
+        rows,
+        prepareRow,
+    } = useTable({
+        columns,
+        data,
+    });
+
+    // useEffect(() => {
+    //     fetch(url)
+    //         .then(response => response.json())
+    //         .then(data => setData(data))
+    // }, [])
+
 
     return (
-        <Table numRows={10}>
-            <Column name="Dollars" cellRenderer={cellRenderer} />
-        </Table>
+        < table {...getTableProps()}>
+            <thead>
+                {headerGroups.map(headerGroup => (
+                    <tr {...headerGroup.getHeaderGroupProps()}>
+                        {headerGroup.headers.map(column => (
+                            <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+                        ))}
+                    </tr>
+                ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+                {rows.map((row, i) => {
+                    prepareRow(row)
+                    return (
+                        <tr {...row.getRowProps()}>
+                            {row.cells.map(cell => {
+                                return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                            })}
+                        </tr>
+                    )
+                })}
+            </tbody>
+        </table >
+
     )
 }
 
@@ -77,3 +138,4 @@ const AddHost: React.FC = () => {
         </div>
     )
 }
+
