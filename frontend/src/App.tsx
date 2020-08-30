@@ -1,26 +1,27 @@
 import React from 'react';
-import logo from './logo.svg';
+import SplitPane from 'react-split-pane';
 import './App.css';
+import { Host } from './components/hosts';
+import { Sidebar } from './components/sidebar';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <SplitPane split="vertical" defaultSize="5%">
+            <div className="Panel-1" >
+                <Sidebar />
+            </div>
+
+            <SplitPane split="vertical" defaultSize="15%" pane2Style={{ overflow: 'scroll' }} style={{ position: 'relative' }}>
+                <div className="Panel-2" style={{ maxHeight: "80%" }}>
+                </div>
+
+                <div className="Panel-3" style={{ overflowY: "scroll" }}>
+                    <Host />
+                </div>
+
+            </SplitPane>
+        </SplitPane>
+    );
 }
 
 export default App;
