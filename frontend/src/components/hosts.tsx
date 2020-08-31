@@ -1,29 +1,28 @@
-import { Button, ControlGroup, Divider, FormGroup, InputGroup, Tab, Tabs } from "@blueprintjs/core";
+import { Button, ControlGroup, Divider, FormGroup, InputGroup } from "@blueprintjs/core";
 import React, { useEffect, useState } from "react";
 import { AppToaster } from "./toasters";
 
 const baseURL = "http://127.0.0.1:9000"
 
-export const Host: React.FC = () => {
-    return (
-        <div>
-            <Tabs
-                id="TabsExample"
-                vertical={false}
-            >
-                <Tab id="rx" title="List" panel={<HostList />} />
-                <Tab id="ng" title="Add" panel={<AddHost />} />
-            </Tabs>
-        </div>
-    )
-}
+// export const Host: React.FC = () => {
+//     return (
+//         <div>
+//             <Tabs
+//                 id="TabsExample"
+//                 vertical={false}
+//             >
+//                 <Tab id="rx" title="List" panel={<HostList />} />
+//                 <Tab id="ng" title="Add" panel={<AddHost />} />
+//             </Tabs>
+//         </div>
+//     )
+// }
 
-const AddHost: React.FC = () => {
+export const AddHost: React.FC = () => {
     const [ip, setIP] = useState("")
     const [user, setUser] = useState("")
     const [password, setPassword] = useState("")
     const [pem, setPem] = useState("")
-    const [showProgressBar, setShowProgressBar] = useState(false)
 
     const handleSave = () => {
         const url = baseURL + "/hosts"
@@ -55,8 +54,6 @@ const AddHost: React.FC = () => {
     const handleInstall = () => {
         const url: string = baseURL + "/hosts/" + ip
 
-        setShowProgressBar(true)
-
         fetch(url,
             {
                 method: 'post',
@@ -75,10 +72,6 @@ const AddHost: React.FC = () => {
 
         alert("Installing. This can take up to 10 mins depending on network conditions.")
     }
-
-    useEffect(() => {
-        setShowProgressBar(false)
-    }, [])
 
     //TODO: add progress bar    
     const showToast = (msg: string) => {
@@ -157,7 +150,7 @@ export interface host {
     IP: string,
 }
 
-const HostList: React.FC = () => {
+export const HostList: React.FC = () => {
     const url = baseURL + "/hosts"
     const [hosts, setHosts] = useState<host[]>([])
 

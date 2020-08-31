@@ -1,4 +1,4 @@
-import { Button, ControlGroup, FormGroup, InputGroup, MenuItem, Tab, Tabs } from "@blueprintjs/core";
+import { Button, ControlGroup, Divider, FormGroup, InputGroup, MenuItem } from "@blueprintjs/core";
 import { ItemRenderer, Select } from "@blueprintjs/select";
 import React, { useEffect, useState } from "react";
 import { host } from "./hosts";
@@ -13,29 +13,30 @@ flows:
 
 const baseURL = "http://127.0.0.1:9000"
 
-export const Flow: React.FC = () => {
+// export const Flow: React.FC = () => {
 
 
-    return (
-        <Tabs
-            id="TabsExample"
-            vertical={false}
-        >
-            <Tab id="1" title="List" panel={<FlowList />} />
-            <Tab id="2" title="Add" panel={<FlowRun />} />
-            <Tab id="3" title="New" panel={<NewFlow />} />
-        </Tabs>
-    )
-}
+//     return (
+//         <Tabs
+//             id="TabsExample"
+//             vertical={false}
+//         >
+//             <Tab id="1" title="List" panel={<FlowList />} />
+//             <Tab id="2" title="Add" panel={<FlowRun />} />
+//             <Tab id="3" title="New" panel={<NewFlow />} />
+//         </Tabs>
+//     )
+// }
 
 interface flow {
     ID: string
     FlowName: string,
     // ip: string, TODO: hostID
     Schedule: string,
+    Tasks: task[],
 }
 
-const FlowList: React.FC = () => {
+export const FlowList: React.FC = () => {
     const url = baseURL + "/flows"
     const [flows, setFlows] = useState<flow[]>([])
 
@@ -106,7 +107,7 @@ interface run {
 }
 
 //TODO: how to view task run & notebook
-const FlowRun: React.FC = () => {
+export const FlowRun: React.FC = () => {
     const url = baseURL + "/runs"
     const [runs, setRuns] = useState<run[]>([])
 
@@ -159,12 +160,14 @@ interface task {
     Next: string
 }
 
-const NewFlow: React.FC = () => {
+export const NewFlow: React.FC = () => {
     const url = baseURL + "/hosts"
 
     const [name, setName] = useState("")
     const [schedule, setSchedule] = useState("")
     const [hosts, setHosts] = useState<host[]>([])
+    const [host, setHost] = useState<host>()
+    const [tasks, setTasks] = useState<task[]>()
 
     useEffect(() => {
         async function fetchData() {
@@ -178,15 +181,46 @@ const NewFlow: React.FC = () => {
 
     }, [url])
 
-    const handleValueChange = () => {
+    const handleValueChange = (item: host) => {
+        setHost(item)
+    }
 
+    const onTaskChange = (tasks: task[]) => {
+        setTasks(tasks)
+    }
+
+    const handleSubmit = () => {
+        const flow = {
+            Name: name,
+            Host: host,
+            Schedule: schedule,
+            Tasks: tasks,
+        }
+
+        console.log(flow)
+        const url = baseURL + "/flows"
+        fetch(url,
+            {
+                method: 'post',
+                body: JSON.stringify(flow)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error !== undefined) {
+                    alert(result.error)
+                } else {
+                    alert(result.message)
+                }
+            })
+            .catch(error => {
+                alert(error)
+            });
     }
 
     const renderHost: ItemRenderer<host> = (host, { handleClick, modifiers, query }) => {
         if (!modifiers.matchesPredicate) {
             return null;
         }
-        console.log("host: ", host)
         return (
             <MenuItem
                 active={modifiers.active}
@@ -239,12 +273,19 @@ const NewFlow: React.FC = () => {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSchedule(e.target.value)} />
                 </FormGroup>
             </ControlGroup>
-            <Tasks />
+            <Tasks onTaskChange={onTaskChange} />
+
+            <Divider />
+            <Button text="Submit" onClick={handleSubmit} />
         </div >
     )
 }
 
-const Tasks: React.FC = () => {
+interface Props {
+    onTaskChange: (tasks: task[]) => void;
+}
+
+const Tasks: React.FC<Props> = ({ onTaskChange }) => {
     const [tasks, setTasks] = useState<task[]>([{ Name: "", Path: "", Next: "" }]);
 
     const handleAddClick = () => {
@@ -266,13 +307,17 @@ const Tasks: React.FC = () => {
         setTasks(list);
     };
 
+    useEffect(() => {
+        onTaskChange(tasks)
+    }, [tasks, onTaskChange])
+
     // handle click event of the Add button
 
     return (
         <div>
             {tasks.map((task, idx) => {
                 return (
-                    <div>
+                    <div key={idx}>
                         <ControlGroup fill={false} vertical={true}>
 
                             <FormGroup
