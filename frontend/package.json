@@ -5,6 +5,7 @@
   "dependencies": {
     "@blueprintjs/core": "^3.31.0",
     "@blueprintjs/docs-theme": "^3.6.5",
+    "@blueprintjs/select": "^3.13.7",
     "@blueprintjs/table": "^3.8.13",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",

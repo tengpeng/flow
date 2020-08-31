@@ -1,5 +1,7 @@
-import { Button, Tab, Tabs } from "@blueprintjs/core"
-import React, { useEffect, useState } from "react"
+import { Button, ControlGroup, FormGroup, InputGroup, MenuItem, Tab, Tabs } from "@blueprintjs/core";
+import { ItemRenderer, Select } from "@blueprintjs/select";
+import React, { useEffect, useState } from "react";
+import { host } from "./hosts";
 
 /*
 flows:
@@ -19,8 +21,9 @@ export const Flow: React.FC = () => {
             id="TabsExample"
             vertical={false}
         >
-            <Tab id="rx" title="List" panel={<FlowList />} />
-            <Tab id="ng" title="Add" panel={<FlowRun />} />
+            <Tab id="1" title="List" panel={<FlowList />} />
+            <Tab id="2" title="Add" panel={<FlowRun />} />
+            <Tab id="3" title="New" panel={<NewFlow />} />
         </Tabs>
     )
 }
@@ -148,9 +151,77 @@ const FlowRun: React.FC = () => {
     )
 }
 
+const HostSelect = Select.ofType<host>();
+
 const NewFlow: React.FC = () => {
+    const url = baseURL + "/hosts"
+
+    const [name, setName] = useState("")
+    const [hosts, setHosts] = useState<host[]>([])
+
+    useEffect(() => {
+        async function fetchData() {
+            const res = await fetch(url)
+            res
+                .json()
+                .then(res => setHosts(res))
+                .catch(err => alert(err))
+        }
+        fetchData()
+
+    }, [url])
+
+    const handleValueChange = () => {
+
+    }
+
+    const renderHost: ItemRenderer<host> = (host, { handleClick, modifiers, query }) => {
+        if (!modifiers.matchesPredicate) {
+            return null;
+        }
+        console.log("host: ", host)
+        return (
+            <MenuItem
+                active={modifiers.active}
+                disabled={modifiers.disabled}
+                key={host.IP}
+                onClick={handleClick}
+                text={host.IP}
+            />
+        );
+    };
 
     return (
-        <div>Flow</div>
+        <div className="add-host">
+
+            <ControlGroup fill={false} vertical={true}>
+
+                <FormGroup
+                    helperText=""
+                    label="Name"
+                    labelFor="text-input"
+                    labelInfo="(required)"
+                >
+                    <InputGroup id="text-input"
+                        placeholder="wf1"
+                        value={name}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} />
+                </FormGroup>
+
+                <HostSelect
+                    itemRenderer={renderHost}
+                    items={hosts}
+                    onItemSelect={handleValueChange}
+                >
+                    <Button
+                        icon="film"
+                        rightIcon="caret-down"
+                        text={"(No selection)"}
+                    />
+                </HostSelect>
+
+            </ControlGroup>
+
+        </div >
     )
 }

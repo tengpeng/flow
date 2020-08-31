@@ -153,7 +153,7 @@ const AddHost: React.FC = () => {
     )
 }
 
-interface host {
+export interface host {
     IP: string,
 }
 
