@@ -254,16 +254,16 @@ const Tasks: React.FC = () => {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
         const { name, value } = e.target;
-        let copy: task[] = Object.assign([], tasks);  // creating copy of state variable jasper
+        const copy = [...tasks];
         (copy[idx] as any)[name] = value
         setTasks(copy);
     };
 
 
-    const handleRemoveClick = (index: string) => {
-        // const list = [...tasks];
-        // list.splice(index, 1);
-        // setTasks(list);
+    const handleRemoveClick = (index: number) => {
+        const list = [...tasks];
+        list.splice(index, 1);
+        setTasks(list);
     };
 
     // handle click event of the Add button
@@ -315,7 +315,7 @@ const Tasks: React.FC = () => {
                             </FormGroup>
 
                         </ControlGroup>
-
+                        <Button text="Remove" onClick={() => handleRemoveClick(idx)} />
                         <Button text="Add" onClick={handleAddClick} />
                     </div>
                 );
