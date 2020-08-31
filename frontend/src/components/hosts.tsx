@@ -90,6 +90,9 @@ const AddHost: React.FC = () => {
 
             <ControlGroup fill={false} vertical={true}>
 
+                <h3>0. Install Jupyter notebook on remote </h3>
+                <Divider />
+
                 <h3>1. Input: </h3>
                 <Divider />
 
@@ -209,7 +212,6 @@ const HostList: React.FC = () => {
                         <th>Actions</th>
                     </tr>
                 </thead>
-                {/* <setRows /> */}
                 {setRows()}
             </table>
         </div>
