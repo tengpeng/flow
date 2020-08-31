@@ -153,10 +153,17 @@ const FlowRun: React.FC = () => {
 
 const HostSelect = Select.ofType<host>();
 
+interface task {
+    Name: string
+    Path: string
+    Next: string
+}
+
 const NewFlow: React.FC = () => {
     const url = baseURL + "/hosts"
 
     const [name, setName] = useState("")
+    const [schedule, setSchedule] = useState("")
     const [hosts, setHosts] = useState<host[]>([])
 
     useEffect(() => {
@@ -220,8 +227,101 @@ const NewFlow: React.FC = () => {
                     />
                 </HostSelect>
 
+                <FormGroup
+                    helperText=""
+                    label="Schedule"
+                    labelFor="text-input"
+                    labelInfo="(required)"
+                >
+                    <InputGroup id="text-input"
+                        placeholder="*/5 * * * *"
+                        value={schedule}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSchedule(e.target.value)} />
+                </FormGroup>
             </ControlGroup>
-
+            <Tasks />
         </div >
     )
 }
+
+const Tasks: React.FC = () => {
+    const [tasks, setTasks] = useState<task[]>([{ Name: "", Path: "", Next: "" }]);
+
+    const handleAddClick = () => {
+        setTasks(tasks.concat({} as task));
+    };
+
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+        const { name, value } = e.target;
+        let copy: task[] = Object.assign([], tasks);  // creating copy of state variable jasper
+        (copy[idx] as any)[name] = value
+        setTasks(copy);
+    };
+
+
+    const handleRemoveClick = (index: string) => {
+        // const list = [...tasks];
+        // list.splice(index, 1);
+        // setTasks(list);
+    };
+
+    // handle click event of the Add button
+
+    return (
+        <div>
+            {tasks.map((task, idx) => {
+                return (
+                    <div>
+                        <ControlGroup fill={false} vertical={true}>
+
+                            <FormGroup
+                                helperText=""
+                                label="Name"
+                                labelFor="text-input"
+                                labelInfo="(required)"
+                            >
+                                <InputGroup id="text-input"
+                                    placeholder="nb1"
+                                    name={"Name"}
+                                    value={task.Name}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(e, idx)} />
+                            </FormGroup>
+
+                            <FormGroup
+                                helperText=""
+                                label="Path"
+                                labelFor="text-input"
+                                labelInfo="(required)"
+                            >
+                                <InputGroup id="text-input"
+                                    placeholder="/Users/Downloads/nb1.ipynb"
+                                    name={"Path"}
+                                    value={task.Path}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(e, idx)} />
+                            </FormGroup>
+
+                            <FormGroup
+                                helperText=""
+                                label="Next"
+                                labelFor="text-input"
+                                labelInfo="(required)"
+                            >
+                                <InputGroup id="text-input"
+                                    placeholder="nb3"
+                                    name={"Next"}
+                                    value={task.Next}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(e, idx)} />
+                            </FormGroup>
+
+                        </ControlGroup>
+
+                        <Button text="Add" onClick={handleAddClick} />
+                    </div>
+                );
+            })}
+
+        </div>
+    );
+}
+
