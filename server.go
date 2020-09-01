@@ -12,7 +12,7 @@ func server() *gin.Engine {
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:3000"},
+		AllowOrigins: []string{"http://localhost:3000", "http://localhost:5000"},
 		// AllowMethods:     []string{"PUT", "PATCH"},
 		// AllowHeaders:     []string{"Origin"},
 		// ExposeHeaders:    []string{"Content-Length"},

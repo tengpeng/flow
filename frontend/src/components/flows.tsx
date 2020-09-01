@@ -1,4 +1,4 @@
-import { Button, ControlGroup, Divider, FormGroup, InputGroup, MenuItem } from "@blueprintjs/core";
+import { Button, ControlGroup, Dialog, Divider, FormGroup, InputGroup, MenuItem } from "@blueprintjs/core";
 import { ItemRenderer, Select } from "@blueprintjs/select";
 import React, { useEffect, useState } from "react";
 import { host } from "./hosts";
@@ -89,8 +89,66 @@ export const FlowList: React.FC = () => {
 
 interface run {
     FlowName: string,
+    Updated_at: string,
     HostID: string,
     Status: string
+    TaskRuns: TaskRun[]
+}
+
+//TODO: popover?
+interface TaskRun {
+    TaskName: string,
+    Updated_at: string,
+    Status: string,
+    Notebook: string
+}
+
+interface taskRunProps {
+    tasks: TaskRun[]
+}
+
+const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
+    const [isOpen, setIsOpen] = useState(false)
+
+    const setRows = () => {
+        tasks.map((task, index) =>
+            <tbody key={index}>
+                <tr>
+                    <td>{task.TaskName}</td>
+                    <td>{task.Updated_at}</td>
+                    <td>{task.Status}</td>
+                    <td>notebook</td>
+                </tr>
+            </tbody>)
+    }
+
+
+    return (
+        <>
+            <Button text="show" onClick={() => setIsOpen(true)}></Button>
+
+            <Dialog
+                title="Tasks"
+                isOpen={isOpen}
+                onClose={() => setIsOpen(false)}
+            >
+                <h4>Tasks </h4>
+                <Divider />
+                <table className="bp3-html-table bp3-html-table-bordered bp3-html-table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                            <th>Notebook</th>
+                        </tr>
+                    </thead>
+                    {setRows()}
+                </table>
+
+            </Dialog>
+        </>
+    )
 }
 
 //TODO: how to view task run & notebook
@@ -116,8 +174,10 @@ export const FlowRun: React.FC = () => {
             <tbody key={index}>
                 <tr>
                     <td>{run.FlowName}</td>
+                    <td>{run.Updated_at}</td>
                     <td>{run.HostID}</td>
                     <td>{run.Status}</td>
+                    <td><TaskRun tasks={run.TaskRuns} /></td>
                 </tr>
             </tbody>
         )
@@ -132,7 +192,9 @@ export const FlowRun: React.FC = () => {
                     <tr>
                         <th>Name</th>
                         <th>Host</th>
+                        <th>Time</th>
                         <th>Status</th>
+                        <th>Tasks</th>
                     </tr>
                 </thead>
                 {setRows()}
@@ -240,15 +302,16 @@ export const NewFlow: React.FC = () => {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} />
                 </FormGroup>
 
+
                 <HostSelect
                     itemRenderer={renderHost}
                     items={hosts}
                     onItemSelect={handleValueChange}
                 >
+                    <text>Host</text>
                     <Button
-                        icon="film"
                         rightIcon="caret-down"
-                        text={"(No selection)"}
+                        text={"(Select host)"}
                     />
                 </HostSelect>
 

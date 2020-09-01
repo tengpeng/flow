@@ -37,7 +37,7 @@ interface Props {
 const CardContainer: React.FC<Props> = ({ component }) => {
     return (
         <>
-            <Card elevation={3} >
+            <Card elevation={1} >
                 {component}
             </Card>
         </>

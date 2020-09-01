@@ -139,6 +139,7 @@ export interface host {
     IP: string,
 }
 
+//TODO: trigger rerender by event
 export const HostList: React.FC = () => {
     const url = baseURL + "/hosts"
     const [hosts, setHosts] = useState<host[]>([])
@@ -202,4 +203,3 @@ export const HostList: React.FC = () => {
         </div>
     )
 }
-

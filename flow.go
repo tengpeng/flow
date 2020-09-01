@@ -44,7 +44,7 @@ type FlowRun struct {
 	HostID   uint
 	FlowName string
 	Time     time.Time
-	Status   int
+	Status   string
 	TaskRuns []TaskRun
 }
 
@@ -52,28 +52,21 @@ type TaskRun struct {
 	FlowRunID uint
 	Name      string
 	Path      string
-	Status    int
+	Status    string
 	RunCnt    int
 	Notebook  string
 }
-
-const (
-	READY = iota
-	RUNNING
-	OK
-	FAIL
-)
 
 func (f *Flow) run() {
 	done := make(chan struct{})
 
 	//create flow run
-	db.Create(&FlowRun{FlowID: f.ID, HostID: f.HostID, FlowName: f.FlowName, Time: time.Now(), Status: READY})
+	db.Create(&FlowRun{FlowID: f.ID, HostID: f.HostID, FlowName: f.FlowName, Time: time.Now(), Status: "READY"})
 	log.Info("Flow run created")
 
 	//get flow run
 	var r FlowRun
-	db.First(&r, "status = ?", READY)
+	db.First(&r, "status = ?", "READY")
 
 	//get tasks for flow run
 	var tasks []Task
@@ -91,7 +84,7 @@ func (f *Flow) run() {
 // task -> taskrun
 func (r *FlowRun) setTasks(tasks []Task) {
 	for _, t := range tasks {
-		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, RunCnt: 2, Status: READY}
+		tr := TaskRun{FlowRunID: r.ID, Name: t.Name, Path: t.Path, RunCnt: 2, Status: "READY"}
 		db.Create(&tr)
 
 		//generate dep
@@ -104,7 +97,7 @@ func (r *FlowRun) setTasks(tasks []Task) {
 }
 
 func (r *FlowRun) start() {
-	db.Model(r).Update("Status", RUNNING)
+	db.Model(r).Update("Status", "RUNNING")
 	log.Info("Flow running")
 
 	var ts []TaskRun
@@ -122,15 +115,15 @@ out:
 		db.Find(&ts, "flow_run_id = ?", r.ID)
 
 		for i := range ts {
-			if ts[i].Status == FAIL {
-				db.Model(r).Update("Status", FAIL)
+			if ts[i].Status == "FAIL" {
+				db.Model(r).Update("Status", "FAIL")
 				log.Info("Flow run failed")
 				break out
 			}
 		}
 
 		if r.done() {
-			db.Model(r).Update("Status", OK)
+			db.Model(r).Update("Status", "OK")
 			log.Info("Flow run OK")
 			break
 		}
@@ -148,7 +141,7 @@ func (r FlowRun) done() bool {
 	db.Find(&ts, "flow_run_id = ?", r.ID)
 
 	for _, t := range ts {
-		if t.Status == READY || t.Status == RUNNING {
+		if t.Status == "READY" || t.Status == "RUNNING" {
 			return false
 		}
 	}
@@ -183,8 +176,8 @@ func (t *TaskRun) delParent() {
 //TODO: refactor
 func (t *TaskRun) run() {
 	if t.RunCnt == 0 {
-		t.Status = FAIL
-		db.Model(t).Update("status", FAIL)
+		t.Status = "FAIL"
+		db.Model(t).Update("status", "FAIL")
 		log.WithFields(logrus.Fields{
 			"task": t.Name,
 		}).Info("Task run failed")
@@ -192,8 +185,8 @@ func (t *TaskRun) run() {
 	}
 
 	t.RunCnt--
-	t.Status = RUNNING
-	db.Model(t).Update("status", RUNNING)
+	t.Status = "RUNNING"
+	db.Model(t).Update("status", "RUNNING")
 
 	out := "temp" + "-" + t.Name
 	oPath := out + ".ipynb"
@@ -206,7 +199,7 @@ func (t *TaskRun) run() {
 		return
 	}
 
-	t.Status = OK
+	t.Status = "OK"
 
 	notebook, err := ioutil.ReadFile(oPath)
 	if err != nil {
