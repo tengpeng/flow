@@ -4,6 +4,7 @@ import { AppToaster } from "./toasters";
 
 const baseURL = "http://127.0.0.1:9000"
 
+//TODO: select or drag & drop pem
 export const AddHost: React.FC = () => {
     const [ip, setIP] = useState("")
     const [user, setUser] = useState("")
@@ -195,7 +196,7 @@ export const HostList: React.FC = () => {
                 <thead>
                     <tr>
                         <th>IP</th>
-                        <th>Actions</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 {setRows()}

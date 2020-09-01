@@ -14,6 +14,7 @@ flows:
 
 const baseURL = "http://127.0.0.1:9000"
 
+//TODO: add tree layout https://vega.github.io/vega/examples/tree-layout/yout 
 interface flow {
     ID: string
     FlowName: string,
@@ -22,6 +23,7 @@ interface flow {
     Tasks: task[],
 }
 
+//TODO: add actions to stop/delete/show
 export const FlowList: React.FC = () => {
     const url = baseURL + "/flows"
     const [flows, setFlows] = useState<flow[]>([])
@@ -44,7 +46,7 @@ export const FlowList: React.FC = () => {
             <tbody key={index}>
                 <tr>
                     <td>{flow.FlowName}</td>
-                    <td>{flow.Schedule}</td>
+
                     <td>  <Button text="start" onClick={() => handleStart(flow.ID)} /></td>
                 </tr>
             </tbody>
@@ -78,7 +80,7 @@ export const FlowList: React.FC = () => {
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Schedule</th>
+
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -136,7 +138,7 @@ const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
 
     return (
         <>
-            <Button text="show" onClick={() => setIsOpen(true)}></Button>
+            <Button text="Show" onClick={() => setIsOpen(true)}></Button>
 
             <Dialog
                 title="Tasks"
@@ -161,7 +163,7 @@ const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
     )
 }
 
-//TODO: how to view task run & notebook
+//TODO: trim time
 export const FlowRun: React.FC = () => {
     const url = baseURL + "/runs"
     const [runs, setRuns] = useState<run[]>([])
@@ -184,7 +186,6 @@ export const FlowRun: React.FC = () => {
             <tbody key={index}>
                 <tr>
                     <td>{run.FlowName}</td>
-                    <td>{run.HostID}</td>
                     <td>{run.UpdatedAt}</td>
                     <td>{run.Status}</td>
                     <td><TaskRun tasks={run.TaskRuns} /></td>
@@ -201,10 +202,9 @@ export const FlowRun: React.FC = () => {
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Host</th>
                         <th>Time</th>
                         <th>Status</th>
-                        <th>Tasks</th>
+                        <th>Task</th>
                     </tr>
                 </thead>
                 {setRows()}
@@ -336,6 +336,7 @@ export const NewFlow: React.FC = () => {
                         value={schedule}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSchedule(e.target.value)} />
                 </FormGroup>
+                <Divider />
             </ControlGroup>
             <Tasks onTaskChange={onTaskChange} />
 
