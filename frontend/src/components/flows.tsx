@@ -13,21 +13,6 @@ flows:
 
 const baseURL = "http://127.0.0.1:9000"
 
-// export const Flow: React.FC = () => {
-
-
-//     return (
-//         <Tabs
-//             id="TabsExample"
-//             vertical={false}
-//         >
-//             <Tab id="1" title="List" panel={<FlowList />} />
-//             <Tab id="2" title="Add" panel={<FlowRun />} />
-//             <Tab id="3" title="New" panel={<NewFlow />} />
-//         </Tabs>
-//     )
-// }
-
 interface flow {
     ID: string
     FlowName: string,
@@ -107,17 +92,6 @@ interface run {
     HostID: string,
     Status: string
 }
-
-const tableStyle = `
-
-}`
-
-// const mystyle = {
-//     color: "white",
-//     backgroundColor: "DodgerBlue",
-//     padding: "10px",
-//     fontFamily: "Arial"
-// };
 
 //TODO: how to view task run & notebook
 export const FlowRun: React.FC = () => {
@@ -368,7 +342,6 @@ const Tasks: React.FC<Props> = ({ onTaskChange }) => {
                                 helperText=""
                                 label="Next"
                                 labelFor="text-input"
-                                labelInfo="(required)"
                             >
                                 <InputGroup id="text-input"
                                     placeholder="nb3"

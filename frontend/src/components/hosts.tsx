@@ -160,7 +160,7 @@ export const HostList: React.FC = () => {
             <tbody key={index}>
                 <tr>
                     <td>{host.IP}</td>
-                    <td>  <Button text="New Notebook" onClick={() => handleClick(host.IP)} /></td>
+                    <td>  <Button text="Notebook" onClick={() => handleClick(host.IP)} /></td>
                 </tr>
             </tbody>
         )

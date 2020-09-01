@@ -9,8 +9,7 @@ const GridLayoutWidth = WidthProvider(GridLayout)
 
 /*
 TODOs:
-- add title
-- tune initial layout
+- change font size to 12px
 - add top navbar
 */
 export const Grid: React.FC = () => {
@@ -26,7 +25,7 @@ export const Grid: React.FC = () => {
 
     return (
         <GridLayoutWidth className="layout" layout={layout} cols={12} rowHeight={30}>
-            {components.map((component, idx) => <div key={'c' + idx}><CardContaienr component={component} /></div>)}
+            {components.map((component, idx) => <div key={'c' + idx}><CardContainer component={component} /></div>)}
         </GridLayoutWidth>
     )
 }
@@ -35,7 +34,7 @@ interface Props {
     component: any
 }
 
-const CardContaienr: React.FC<Props> = ({ component }) => {
+const CardContainer: React.FC<Props> = ({ component }) => {
     return (
         <>
             <Card elevation={3} >
