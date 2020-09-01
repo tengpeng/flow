@@ -85,7 +85,9 @@ export const FlowList: React.FC = () => {
     }
 
     return (
-        <div>
+        <>
+            <h4>Flows </h4>
+            <Divider />
             <table className="bp3-html-table bp3-html-table-bordered bp3-html-table-striped">
                 <thead>
                     <tr>
@@ -96,7 +98,7 @@ export const FlowList: React.FC = () => {
                 </thead>
                 {setRows()}
             </table>
-        </div>
+        </>
     )
 }
 
@@ -148,7 +150,9 @@ export const FlowRun: React.FC = () => {
     }
 
     return (
-        <div className="run">
+        <>
+            <h4>Runs </h4>
+            <Divider />
             <table className="bp3-html-table bp3-html-table-bordered bp3-html-table-striped">
                 <thead>
                     <tr>
@@ -159,7 +163,7 @@ export const FlowRun: React.FC = () => {
                 </thead>
                 {setRows()}
             </table>
-        </div>
+        </>
     )
 }
 
@@ -244,7 +248,9 @@ export const NewFlow: React.FC = () => {
     };
 
     return (
-        <div className="add-host">
+        <>
+            <h4>Flows: New </h4>
+            <Divider />
 
             <ControlGroup fill={false} vertical={true}>
 
@@ -288,7 +294,7 @@ export const NewFlow: React.FC = () => {
 
             <Divider />
             <Button text="Submit" onClick={handleSubmit} />
-        </div >
+        </ >
     )
 }
 
@@ -326,6 +332,7 @@ const Tasks: React.FC<Props> = ({ onTaskChange }) => {
 
     return (
         <div>
+
             {tasks.map((task, idx) => {
                 return (
                     <div key={idx}>

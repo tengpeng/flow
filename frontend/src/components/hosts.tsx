@@ -69,7 +69,7 @@ export const AddHost: React.FC = () => {
 
             <ControlGroup fill={false} vertical={true}>
 
-                <h3>Add remote host </h3>
+                <h4>Hosts: Add </h4>
                 <Divider />
 
                 <h5>1. Input: </h5>
@@ -188,7 +188,7 @@ export const HostList: React.FC = () => {
     return (
         <div>
 
-            <h4>Connect remote Jupyter </h4>
+            <h4>Hosts: Connect </h4>
             <Divider />
             <table className="bp3-html-table bp3-html-table-bordered bp3-html-table-striped">
                 <thead>
