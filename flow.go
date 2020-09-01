@@ -190,6 +190,7 @@ func (t *TaskRun) run() {
 
 	out := "temp" + "-" + t.Name
 	oPath := out + ".ipynb"
+	//TODO: jupyter path
 	cmd := exec.Command("jupyter", "nbconvert", "--to", "notebook",
 		"--output", out, "--execute", t.Path, "--ExecutePreprocessor.timeout=3600")
 	err := cmd.Run()
@@ -201,7 +202,15 @@ func (t *TaskRun) run() {
 
 	t.Status = "OK"
 
-	notebook, err := ioutil.ReadFile(oPath)
+	cmd = exec.Command("jupyter", "nbconvert", oPath, "--to", "html")
+	err = cmd.Run()
+	if err != nil {
+		log.Error(err)
+		t.run()
+		return
+	}
+
+	notebook, err := ioutil.ReadFile(out + ".html")
 	if err != nil {
 		log.Error(err)
 	}
@@ -211,6 +220,11 @@ func (t *TaskRun) run() {
 	}
 
 	err = os.Remove(oPath)
+	if err != nil {
+		log.Error("Failed to remove temp notebook")
+	}
+
+	err = os.Remove(out + ".html")
 	if err != nil {
 		log.Error("Failed to remove temp notebook")
 	}

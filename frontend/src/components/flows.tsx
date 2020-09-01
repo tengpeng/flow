@@ -3,6 +3,7 @@ import { ItemRenderer, Select } from "@blueprintjs/select";
 import React, { useEffect, useState } from "react";
 import { host } from "./hosts";
 
+
 /*
 flows:
     - list of flows
@@ -97,7 +98,7 @@ interface run {
 
 //TODO: popover?
 interface TaskRun {
-    TaskName: string,
+    Name: string,
     Updated_at: string,
     Status: string,
     Notebook: string
@@ -110,14 +111,22 @@ interface taskRunProps {
 const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
     const [isOpen, setIsOpen] = useState(false)
 
+    const handleClick = (Notebook: string) => {
+        var w = window.open();
+        w!.document.open();
+        w!.document.write(Notebook);
+        w!.document.close();
+    }
+
     const setRows = () => {
-        tasks.map((task, index) =>
+        console.log(tasks)
+        return tasks.map((task, index) =>
             <tbody key={index}>
                 <tr>
-                    <td>{task.TaskName}</td>
+                    <td>{task.Name}</td>
                     <td>{task.Updated_at}</td>
                     <td>{task.Status}</td>
-                    <td>notebook</td>
+                    <td><Button text="Open" onClick={() => handleClick(task.Notebook)} /></td>
                 </tr>
             </tbody>)
     }
@@ -132,8 +141,7 @@ const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
                 isOpen={isOpen}
                 onClose={() => setIsOpen(false)}
             >
-                <h4>Tasks </h4>
-                <Divider />
+
                 <table className="bp3-html-table bp3-html-table-bordered bp3-html-table-striped">
                     <thead>
                         <tr>
