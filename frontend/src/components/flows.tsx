@@ -90,7 +90,7 @@ export const FlowList: React.FC = () => {
 
 interface run {
     FlowName: string,
-    Updated_at: string,
+    UpdatedAt: string,
     HostID: string,
     Status: string
     TaskRuns: TaskRun[]
@@ -99,13 +99,16 @@ interface run {
 //TODO: popover?
 interface TaskRun {
     Name: string,
-    Updated_at: string,
     Status: string,
     Notebook: string
 }
 
 interface taskRunProps {
     tasks: TaskRun[]
+}
+
+const taskRunStyle = {
+    'alignSelf': 'center',
 }
 
 const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
@@ -124,7 +127,6 @@ const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
             <tbody key={index}>
                 <tr>
                     <td>{task.Name}</td>
-                    <td>{task.Updated_at}</td>
                     <td>{task.Status}</td>
                     <td><Button text="Open" onClick={() => handleClick(task.Notebook)} /></td>
                 </tr>
@@ -142,11 +144,11 @@ const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
                 onClose={() => setIsOpen(false)}
             >
 
-                <table className="bp3-html-table bp3-html-table-bordered bp3-html-table-striped">
+                <table className="bp3-html-table bp3-html-table-bordered bp3-html-table-striped"
+                    style={taskRunStyle}>
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Time</th>
                             <th>Status</th>
                             <th>Notebook</th>
                         </tr>
@@ -182,8 +184,8 @@ export const FlowRun: React.FC = () => {
             <tbody key={index}>
                 <tr>
                     <td>{run.FlowName}</td>
-                    <td>{run.Updated_at}</td>
                     <td>{run.HostID}</td>
+                    <td>{run.UpdatedAt}</td>
                     <td>{run.Status}</td>
                     <td><TaskRun tasks={run.TaskRuns} /></td>
                 </tr>
