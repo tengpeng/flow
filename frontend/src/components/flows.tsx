@@ -106,6 +106,17 @@ interface run {
     Status: string
 }
 
+const tableStyle = `
+
+}`
+
+// const mystyle = {
+//     color: "white",
+//     backgroundColor: "DodgerBlue",
+//     padding: "10px",
+//     fontFamily: "Arial"
+// };
+
 //TODO: how to view task run & notebook
 export const FlowRun: React.FC = () => {
     const url = baseURL + "/runs"
@@ -137,7 +148,7 @@ export const FlowRun: React.FC = () => {
     }
 
     return (
-        <div>
+        <div className="run">
             <table className="bp3-html-table bp3-html-table-bordered bp3-html-table-striped">
                 <thead>
                     <tr>

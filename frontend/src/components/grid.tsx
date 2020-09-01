@@ -16,59 +16,40 @@ TODOs:
 */
 export const Grid: React.FC = () => {
     const layout = [
-        { i: 'AddHost', x: 0, y: 0, w: 2, h: 16 },
-        { i: 'HostList', x: 2, y: 0, w: 2, h: 4 },
-        { i: 'FlowRun', x: 4, y: 0, w: 6, h: 8 },
-        { i: 'NewFlow', x: 10, y: 0, w: 2, h: 4 },
-        { i: 'FlowList', x: 12, y: 0, w: 2, h: 4 },
+        { i: 'c0', x: 0, y: 0, w: 2, h: 16 },
+        { i: 'c1', x: 2, y: 0, w: 2, h: 16 },
+        { i: 'c2', x: 4, y: 0, w: 2, h: 16 },
+        { i: 'c3', x: 6, y: 0, w: 4, h: 16 },
+        { i: 'c4', x: 12, y: 0, w: 2, h: 16 },
     ];
 
+    const components = [<AddHost />, <HostList />, <FlowList />, <FlowRun />, <NewFlow />]
+
+    components.map((component, idx) => console.log(idx))
+
     return (
-        <GridLayoutWidth className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
-            {/* <CardList /> */}
-            <div key="AddHost">
-                <Card elevation={3}>
-                    <AddHost />
-                </Card>
-            </div>
-            <div key="HostList">
-                <Card elevation={3}>
-                    <HostList />
-                </Card>
-            </div>
-            <div key="NewFlow">
-                <Card elevation={3}>
-                    <NewFlow />
-                </Card>
-            </div>
-            <div key="FlowRun">
-                <Card elevation={3}>
-                    <FlowRun />
-                </Card>
-            </div>
-            <div key="FlowList">
-                <Card elevation={3}>
-                    <FlowList />
-                </Card>
-            </div>
+        <GridLayoutWidth className="layout" layout={layout} cols={12} rowHeight={30}>
+            {components.map((component, idx) => <div key={'c' + idx}><CardContaienr key={'c' + idx} id={'c' + idx} component={component} /></div>)}
         </GridLayoutWidth>
     )
 }
 
+// height: 100 %;
+// overflow: auto;
+
+interface Props {
+    id: string,
+    component: any //TODO
+    children?: any
+}
 //TODO: card container
-// const CardList: React.FC = () => {
-//     const components = [<AddHost />, <HostList />, <FlowList />, <FlowRun />, <NewFlow />]
-
-//     return (
-//         <div>
-//             {components.map((component, idx) => {
-//                 return (
-//                     <Card elevation={3}>
-//                         {component}
-//                     </Card>
-//                 )
-
-//             })}
-//         </div>
-//     )
-// }
+const CardContaienr: React.FC<Props> = ({ children, id, component }) => {
+    return (
+        < div key={id} className="card-container">
+            <Card elevation={3} >
+                {component}
+                {children}
+            </Card>
+        </div >
+    )
+}

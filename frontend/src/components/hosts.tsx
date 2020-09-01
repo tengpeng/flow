@@ -4,20 +4,6 @@ import { AppToaster } from "./toasters";
 
 const baseURL = "http://127.0.0.1:9000"
 
-// export const Host: React.FC = () => {
-//     return (
-//         <div>
-//             <Tabs
-//                 id="TabsExample"
-//                 vertical={false}
-//             >
-//                 <Tab id="rx" title="List" panel={<HostList />} />
-//                 <Tab id="ng" title="Add" panel={<AddHost />} />
-//             </Tabs>
-//         </div>
-//     )
-// }
-
 export const AddHost: React.FC = () => {
     const [ip, setIP] = useState("")
     const [user, setUser] = useState("")
@@ -83,10 +69,10 @@ export const AddHost: React.FC = () => {
 
             <ControlGroup fill={false} vertical={true}>
 
-                <h3>0. Install Jupyter notebook on remote </h3>
+                <h3>Add remote host </h3>
                 <Divider />
 
-                <h3>1. Input: </h3>
+                <h5>1. Input: </h5>
                 <Divider />
 
                 <FormGroup
@@ -131,12 +117,15 @@ export const AddHost: React.FC = () => {
                 </FormGroup>
 
                 <Divider />
-                <h3>2. Save: </h3>
+
+                <h5>2. Save: </h5>
 
 
                 <Button text="Save" onClick={handleSave} />
+                <br></br>
+                <Divider />
 
-                <h3>3. Install: </h3>
+                <h5>3. Install: </h5>
 
                 <Button text="Install" onClick={handleInstall} />
 
@@ -198,6 +187,9 @@ export const HostList: React.FC = () => {
 
     return (
         <div>
+
+            <h4>Connect remote Jupyter </h4>
+            <Divider />
             <table className="bp3-html-table bp3-html-table-bordered bp3-html-table-striped">
                 <thead>
                     <tr>
