@@ -14,7 +14,6 @@ flows:
 
 const baseURL = "http://127.0.0.1:9000"
 
-//TODO: add tree layout https://vega.github.io/vega/examples/tree-layout/yout 
 interface flow {
     ID: string
     FlowName: string,

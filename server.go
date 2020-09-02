@@ -98,7 +98,7 @@ func newDeployment(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"message": "New deployment OK",
+		"message": "Installation OK",
 	})
 }
 

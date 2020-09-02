@@ -1,8 +1,14 @@
 import { Button, ControlGroup, Divider, FormGroup, InputGroup } from "@blueprintjs/core";
 import React, { useEffect, useState } from "react";
+import { atom, selector, useRecoilState, useRecoilValue } from "recoil";
 import { AppToaster } from "./toasters";
 
 const baseURL = "http://127.0.0.1:9000"
+
+const hostRefresh = atom({
+    key: 'hostRefresh', // unique ID (with respect to other atoms/selectors)
+    default: 0, // default value (aka initial value)
+});
 
 //TODO: select or drag & drop pem
 export const AddHost: React.FC = () => {
@@ -10,6 +16,7 @@ export const AddHost: React.FC = () => {
     const [user, setUser] = useState("")
     const [password, setPassword] = useState("")
     const [pem, setPem] = useState("")
+    const [count, setCount] = useRecoilState(hostRefresh);
 
     const handleSave = () => {
         const url = baseURL + "/hosts"
@@ -51,6 +58,7 @@ export const AddHost: React.FC = () => {
                     showToast(result.error)
                 } else {
                     showToast(result.message)
+                    setCount(count + 1)
                 }
             })
             .catch(error => {
@@ -144,6 +152,14 @@ export interface host {
 export const HostList: React.FC = () => {
     const url = baseURL + "/hosts"
     const [hosts, setHosts] = useState<host[]>([])
+    const hostRefreshTarget = selector({
+        key: 'hostRefreshTarget', // unique ID (with respect to other atoms/selectors)
+        get: ({ get }) => {
+            return get(hostRefresh)
+        },
+    });
+
+    const count = useRecoilValue(hostRefreshTarget);
 
     useEffect(() => {
         async function fetchData() {
@@ -155,7 +171,7 @@ export const HostList: React.FC = () => {
         }
 
         fetchData()
-    }, [url])
+    }, [url, count])
 
     const setRows = () => {
         return hosts.map((host, index) =>
