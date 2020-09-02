@@ -1,6 +1,7 @@
 import { Button, ControlGroup, Dialog, Divider, FormGroup, InputGroup, MenuItem } from "@blueprintjs/core";
 import { ItemRenderer, Select } from "@blueprintjs/select";
 import React, { useEffect, useState } from "react";
+import { atom, selector, useRecoilState, useRecoilValue } from "recoil";
 import { host } from "./hosts";
 
 
@@ -14,6 +15,11 @@ flows:
 
 const baseURL = "http://127.0.0.1:9000"
 
+const flowRefresh = atom({
+    key: 'flowRefresh', // unique ID (with respect to other atoms/selectors)
+    default: 0, // default value (aka initial value)
+});
+
 interface flow {
     ID: string
     FlowName: string,
@@ -26,6 +32,13 @@ interface flow {
 export const FlowList: React.FC = () => {
     const url = baseURL + "/flows"
     const [flows, setFlows] = useState<flow[]>([])
+    const flowRefreshTarget = selector({
+        key: 'flowRefreshTarget', // unique ID (with respect to other atoms/selectors)
+        get: ({ get }) => {
+            return get(flowRefresh)
+        },
+    });
+    const count = useRecoilValue(flowRefreshTarget);
 
     useEffect(() => {
         async function fetchData() {
@@ -37,7 +50,7 @@ export const FlowList: React.FC = () => {
         }
         fetchData()
 
-    }, [url])
+    }, [url, count])
 
     //TODO: start flows
     const setRows = () => {
@@ -228,6 +241,8 @@ export const NewFlow: React.FC = () => {
     const [hosts, setHosts] = useState<host[]>([])
     const [host, setHost] = useState<host>()
     const [tasks, setTasks] = useState<task[]>()
+    const [count, setCount] = useRecoilState(flowRefresh);
+
 
     useEffect(() => {
         async function fetchData() {
@@ -241,6 +256,7 @@ export const NewFlow: React.FC = () => {
 
     }, [url])
 
+    //TODO:
     const handleValueChange = (item: host) => {
         setHost(item)
     }
@@ -270,6 +286,7 @@ export const NewFlow: React.FC = () => {
                     alert(result.error)
                 } else {
                     alert(result.message)
+                    setCount(count + 1)
                 }
             })
             .catch(error => {
