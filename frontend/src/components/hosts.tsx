@@ -148,7 +148,7 @@ export interface host {
     IP: string,
 }
 
-//TODO: trigger rerender by event
+//TODO: open browser lagging
 export const HostList: React.FC = () => {
     const url = baseURL + "/hosts"
     const [hosts, setHosts] = useState<host[]>([])

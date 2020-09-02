@@ -206,7 +206,7 @@ export const FlowRun: React.FC = () => {
             <tbody key={index}>
                 <tr>
                     <td>{run.FlowName}</td>
-                    <td>{run.UpdatedAt}</td>
+                    <td>{run.UpdatedAt.split(".")[0].replace('T', ' ')}</td>
                     <td>{run.Status}</td>
                     <td><TaskRun tasks={run.TaskRuns} /></td>
                 </tr>
