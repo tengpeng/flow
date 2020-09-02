@@ -111,7 +111,6 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name }) => {
     )
 }
 
-//TODO: add actions to stop/delete/show
 export const FlowList: React.FC = () => {
     const url = baseURL + "/flows"
     const [flows, setFlows] = useState<flow[]>([])
@@ -135,9 +134,6 @@ export const FlowList: React.FC = () => {
         fetchData()
     }, [url, count])
 
-
-
-    //TODO: start flows
     const setRows = () => {
         return flows.map((flow, index) =>
             <tbody key={index}>
@@ -176,7 +172,6 @@ interface run {
     TaskRuns: TaskRun[]
 }
 
-//TODO: popover?
 interface TaskRun {
     Name: string,
     Status: string,
@@ -260,7 +255,6 @@ export const FlowRun: React.FC = () => {
         return () => clearInterval(interval);
     }, [url])
 
-    //TODO: start flows
     const setRows = () => {
         return runs.map((run, index) =>
             <tbody key={index}>

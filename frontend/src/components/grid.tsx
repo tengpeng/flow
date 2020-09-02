@@ -10,9 +10,7 @@ const GridLayoutWidth = WidthProvider(GridLayout)
 /*
 TODOs:
 - change font size to 12px
-- add top navbar
-- automatically poll new data
-- draggable size
+- add draggable handle
 */
 export const Grid: React.FC = () => {
     const layout = [
