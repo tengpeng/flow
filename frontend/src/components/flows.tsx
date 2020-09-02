@@ -337,7 +337,7 @@ export const NewFlow: React.FC = () => {
                     <text>Host</text>
                     <Button
                         rightIcon="caret-down"
-                        text={"(Select host)"}
+                        text={host ? host.IP : "(Select host)"}
                     />
                 </HostSelect>
 
