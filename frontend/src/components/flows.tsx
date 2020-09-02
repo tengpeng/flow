@@ -267,7 +267,7 @@ export const NewFlow: React.FC = () => {
 
     const handleSubmit = () => {
         const flow = {
-            Name: name,
+            FlowName: name,
             Host: host,
             Schedule: schedule,
             Tasks: tasks,
