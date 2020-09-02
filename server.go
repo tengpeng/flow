@@ -33,6 +33,8 @@ func server() *gin.Engine {
 
 	//core (= centralized db)
 	r.POST("/flows", newFlow)
+	r.DELETE("/flows/:name", deleteFLow)
+	r.PUT("/flows/:name", stopFLow)
 	r.GET("/flows", getFlows)
 	r.GET("/runs", getRuns)
 
@@ -127,6 +129,35 @@ func newFlow(c *gin.Context) {
 	}
 
 	err = db.Create(&f).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "OK",
+	})
+}
+
+//Stop first
+func deleteFLow(c *gin.Context) {
+	name := c.Param("name")
+	var f Flow
+	err := db.Where("name = ?", name).Delete(&f).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "OK",
+	})
+}
+
+func stopFLow(c *gin.Context) {
+	name := c.Param("name")
+	var f Flow
+	err := db.Model(&f).Where("flow_name = ?", name).Update("Status", "STOP").Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

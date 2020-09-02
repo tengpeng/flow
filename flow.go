@@ -11,12 +11,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+//TODO: validate flow
 type Flow struct {
 	gorm.Model
-	FlowName string `gorm:"not null"` //TODO: unique across two columns
+	FlowName string `gorm:"unique;not null"` //TODO: unique across two columns
 	HostID   uint   `gorm:"not null"`
 	Schedule string `gorm:"not null"`
 	Status   string //used by db
+	CronID   int
 	Tasks    []Task
 }
 

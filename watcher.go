@@ -21,27 +21,56 @@ func tunnelWatcher() {
 
 //TODO: add all existing flows to cron when restarted
 func flowWatcher() {
+	var fs []Flow
+	db.Not("status = ?", "STOPPED").Find(&fs)
+	db.Model(&fs).Update("status", "")
+	c := cron.New()
+	c.Start()
+
 	for {
-		var f Flow
-		db.Find(&f, "status = ?", "")
-
-		if f.Schedule != "" {
-			db.Model(&f).Update("Status", "STARTED")
-
-			log.WithFields(logrus.Fields{
-				"flow": f.FlowName,
-			}).Info("Get new flow")
-
-			c := cron.New()
-			c.Start()
-			c.AddFunc(f.Schedule, func() { f.run() })
-
-			log.WithFields(logrus.Fields{
-				"schedule": f.Schedule,
-			}).Info("Add cron job")
-		}
+		addFlow(c)
+		stopFlow(c)
 		time.Sleep(time.Second)
 	}
+}
+
+func addFlow(c *cron.Cron) {
+	var f Flow
+	if db.Find(&f, "status = ?", "").RecordNotFound() {
+		return
+	}
+	log.WithFields(logrus.Fields{
+		"flow": f.FlowName,
+	}).Info("Get new flow")
+
+	cID, err := c.AddFunc(f.Schedule, func() { f.run() })
+	if err != nil {
+		log.Error(err)
+		db.Model(&f).Updates(Flow{Status: "FAILED", CronID: int(cID)})
+		return
+	}
+
+	db.Model(&f).Updates(Flow{Status: "STARTED", CronID: int(cID)})
+
+	log.WithFields(logrus.Fields{
+		"schedule": f.Schedule,
+	}).Info("Add cron job")
+
+}
+
+func stopFlow(c *cron.Cron) {
+	var f Flow
+	if db.Find(&f, "status = ?", "STOP").RecordNotFound() {
+		return
+	}
+
+	c.Remove(cron.EntryID(f.CronID))
+
+	db.Model(&f).Update("status", "STOPPED")
+
+	log.WithFields(logrus.Fields{
+		"flow": f.FlowName,
+	}).Info("Stop flow")
 }
 
 func watchCoreTunnel() {
