@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -139,11 +140,20 @@ func newFlow(c *gin.Context) {
 	})
 }
 
-//Stop first
 func deleteFLow(c *gin.Context) {
 	name := c.Param("name")
 	var f Flow
-	err := db.Where("name = ?", name).Delete(&f).Error
+
+	//stop first
+	err := db.Model(&f).Where("flow_name = ?", name).Update("Status", "STOP").Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//TODO: wait for stopped
+	time.Sleep(2 * time.Second)
+	err = db.Where("flow_name = ?", name).Delete(&f).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
