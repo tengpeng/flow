@@ -40,6 +40,8 @@ export const FlowList: React.FC = () => {
     });
     const count = useRecoilValue(flowRefreshTarget);
 
+
+
     useEffect(() => {
         async function fetchData() {
             const res = await fetch(url)
@@ -48,9 +50,11 @@ export const FlowList: React.FC = () => {
                 .then(res => setFlows(res))
                 .catch(err => alert(err))
         }
-        fetchData()
 
+        fetchData()
     }, [url, count])
+
+
 
     //TODO: start flows
     const setRows = () => {
@@ -190,6 +194,10 @@ export const FlowRun: React.FC = () => {
         }
         fetchData()
 
+        const interval = setInterval(async () => {
+            await fetchData()
+        }, 60 * 1000);
+        return () => clearInterval(interval);
     }, [url])
 
     //TODO: start flows
@@ -256,7 +264,6 @@ export const NewFlow: React.FC = () => {
 
     }, [url])
 
-    //TODO:
     const handleValueChange = (item: host) => {
         setHost(item)
     }
@@ -334,7 +341,7 @@ export const NewFlow: React.FC = () => {
                     items={hosts}
                     onItemSelect={handleValueChange}
                 >
-               
+
                     <Button
                         rightIcon="caret-down"
                         text={host ? host.IP : "(Host: Select host)"}
