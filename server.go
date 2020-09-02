@@ -14,7 +14,7 @@ func server() *gin.Engine {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"http://localhost:3000", "http://localhost:5000"},
-		// AllowMethods:     []string{"PUT", "PATCH"},
+		AllowMethods: []string{"PUT", "GET", "POST", "DELETE"},
 		// AllowHeaders:     []string{"Origin"},
 		// ExposeHeaders:    []string{"Content-Length"},
 		// AllowCredentials: true,
@@ -35,7 +35,8 @@ func server() *gin.Engine {
 	//core (= centralized db)
 	r.POST("/flows", newFlow)
 	r.DELETE("/flows/:name", deleteFLow)
-	r.PUT("/flows/:name", stopFLow)
+	r.PUT("/flows/start/:name", startFlow)
+	r.PUT("/flows/stop/:name", stopFLow)
 	r.GET("/flows", getFlows)
 	r.GET("/runs", getRuns)
 
@@ -153,7 +154,7 @@ func deleteFLow(c *gin.Context) {
 
 	//TODO: wait for stopped
 	time.Sleep(2 * time.Second)
-	err = db.Where("flow_name = ?", name).Delete(&f).Error
+	err = db.Where("flow_name = ?", name).Unscoped().Delete(&f).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -162,6 +163,12 @@ func deleteFLow(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "OK",
 	})
+}
+
+func startFlow(c *gin.Context) {
+	name := c.Param("name")
+	var f Flow
+	db.Model(&f).Where("flow_name = ?", name).Update("status", "")
 }
 
 func stopFLow(c *gin.Context) {

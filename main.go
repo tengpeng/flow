@@ -17,7 +17,12 @@ import (
 var db *gorm.DB
 var p string
 
-//TODO: Add flag for dev
+/*
+TODOs:
+- Add flag for dev
+- test 8000
+- test multiple remote
+*/
 func main() {
 	Worker := flag.Bool("worker", false, "Start remote worker")
 	Port := flag.String("p", "22", "Set SSH port")

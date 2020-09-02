@@ -1,4 +1,4 @@
-import { Button, ControlGroup, Dialog, Divider, FormGroup, InputGroup, MenuItem } from "@blueprintjs/core";
+import { Button, ControlGroup, Dialog, Divider, FormGroup, InputGroup, Menu, MenuDivider, MenuItem, Popover, Position } from "@blueprintjs/core";
 import { ItemRenderer, Select } from "@blueprintjs/select";
 import React, { useEffect, useState } from "react";
 import { atom, selector, useRecoilState, useRecoilValue } from "recoil";
@@ -28,6 +28,89 @@ interface flow {
     Tasks: task[],
 }
 
+interface flowMenuProps {
+    Name: string
+}
+
+const FlowMenu: React.FC<flowMenuProps> = ({ Name }) => {
+
+    const handleStart = () => {
+        const url = baseURL + "/flows/start/" + Name
+        fetch(url,
+            {
+                method: 'put',
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error !== undefined) {
+                    alert(result.error)
+                } else {
+                    alert(result.message)
+                }
+            })
+            .catch(error => {
+                alert(error)
+            });
+    }
+
+    const handleStop = () => {
+        console.log("stop")
+        const url = baseURL + "/flows/stop/" + Name
+        fetch(url,
+            {
+                method: 'put',
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error !== undefined) {
+                    alert(result.error)
+                } else {
+                    alert(result.message)
+                }
+            })
+            .catch(error => {
+                alert(error)
+            });
+    }
+
+    //TODO: should disappear
+    const handleDelete = () => {
+        const url = baseURL + "/flows/" + Name
+        fetch(url,
+            {
+                method: 'delete',
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error !== undefined) {
+                    alert(result.error)
+                } else {
+                    alert(result.message)
+                }
+            })
+            .catch(error => {
+                alert(error)
+            });
+    }
+
+    const menu = (
+        <Menu>
+            <MenuItem text="Start" onClick={() => handleStart()} />
+            <MenuItem text="Stop" onClick={() => handleStop()} />
+            <MenuDivider />
+            <MenuItem text="Delete" onClick={() => handleDelete()} />
+        </Menu>
+    );
+
+    return (
+        <>
+            <Popover content={menu} position={Position.BOTTOM}>
+                <Button text="Actions" />
+            </Popover>
+        </>
+    )
+}
+
 //TODO: add actions to stop/delete/show
 export const FlowList: React.FC = () => {
     const url = baseURL + "/flows"
@@ -39,8 +122,6 @@ export const FlowList: React.FC = () => {
         },
     });
     const count = useRecoilValue(flowRefreshTarget);
-
-
 
     useEffect(() => {
         async function fetchData() {
@@ -63,29 +144,10 @@ export const FlowList: React.FC = () => {
                 <tr>
                     <td>{flow.FlowName}</td>
 
-                    <td>  <Button text="start" onClick={() => handleStart(flow.ID)} /></td>
+                    <td>  <FlowMenu Name={flow.FlowName} /></td>
                 </tr>
             </tbody>
         )
-    }
-
-    const handleStart = (ID: string) => {
-        const url = baseURL + "/flows/" + ID
-        fetch(url,
-            {
-                method: 'post',
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.error !== undefined) {
-                    alert(result.error)
-                } else {
-                    alert(result.message)
-                }
-            })
-            .catch(error => {
-                alert(error)
-            });
     }
 
     return (
@@ -140,7 +202,6 @@ const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
     }
 
     const setRows = () => {
-        console.log(tasks)
         return tasks.map((task, index) =>
             <tbody key={index}>
                 <tr>
@@ -179,7 +240,6 @@ const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
     )
 }
 
-//TODO: trim time
 export const FlowRun: React.FC = () => {
     const url = baseURL + "/runs"
     const [runs, setRuns] = useState<run[]>([])
@@ -280,7 +340,6 @@ export const NewFlow: React.FC = () => {
             Tasks: tasks,
         }
 
-        console.log(flow)
         const url = baseURL + "/flows"
         fetch(url,
             {

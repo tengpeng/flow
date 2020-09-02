@@ -12,6 +12,7 @@ TODOs:
 - change font size to 12px
 - add top navbar
 - automatically poll new data
+- draggable size
 */
 export const Grid: React.FC = () => {
     const layout = [
