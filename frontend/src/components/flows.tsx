@@ -282,22 +282,26 @@ const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
     )
 }
 
+//BUG: Flow run always running
 export const FlowRun: React.FC = () => {
     const tunnelsTargetState = selector({
-        key: 'tunnelsTargetState', // unique ID (with respect to other atoms/selectors)
+        key: 'tunnelsTargetState',
         get: ({ get }) => {
+            console.log(tunnelsState)
             return get(tunnelsState);
         },
     });
     const tunnels = useRecoilValue(tunnelsTargetState);
     const [runs, setRuns] = useState<run[]>([])
 
+    console.log(tunnels)
+
     useEffect(() => {
         async function fetchData() {
             tunnels.map(
                 async tunnel => (await fetch("http://" + tunnel.LocalAddr + "/runs"))
                     .json()
-                    .then(res => console.log(res)) //setRuns(runs.concat(res))
+                    .then(res => setRuns(runs.concat(res))) //
                     .catch(err => console.log(err))
             )
         }
@@ -307,7 +311,7 @@ export const FlowRun: React.FC = () => {
             await fetchData()
         }, 60 * 1000);
         return () => clearInterval(interval);
-    }, [])
+    }, [tunnels])
 
     const setRows = () => {
         return runs.map((run, index) =>
