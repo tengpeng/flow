@@ -13,7 +13,6 @@ flows:
     - new flow
 */
 
-//TODO: add host -> new selection
 //TODO: add view flow button
 const baseURL = "http://127.0.0.1:9000" //TODO: clean up
 
@@ -36,7 +35,6 @@ interface flowMenuProps {
     HostIP: string
 }
 
-//TODO: get tunnels
 const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
     const lookURL = async () => {
         const url = baseURL + "/tunnels/" + HostIP
@@ -56,7 +54,6 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
         return localAddr
     }
 
-    //TODO: find that tunnel to start
     const handleStart = async () => {
         const localAddr = await lookURL()
         console.log("handleStart: ", localAddr)
@@ -367,7 +364,7 @@ export const NewFlow: React.FC = () => {
 
     const [name, setName] = useState("")
     const [schedule, setSchedule] = useState("")
-    const [hosts, setHosts] = useState<host[]>([])
+    const [hosts, setHosts] = useState<host[]>([{ IP: "127.0.0.1" } as host])
     const [host, setHost] = useState<host>()
     const [tasks, setTasks] = useState<task[]>()
     const [count, setCount] = useRecoilState(flowRefresh);
@@ -379,7 +376,7 @@ export const NewFlow: React.FC = () => {
             const res = await fetch(url)
             res
                 .json()
-                .then(res => setHosts(res))
+                .then(res => setHosts(hosts.concat(res)))
                 .catch(err => alert(err))
         }
         fetchData()
