@@ -145,6 +145,7 @@ export const AddHost: React.FC = () => {
 }
 
 export interface host {
+    ID: string
     IP: string,
 }
 

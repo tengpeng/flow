@@ -14,7 +14,8 @@ flows:
 */
 
 //TODO: add host -> new selection
-const baseURL = "http://127.0.0.1:9000"
+//TODO: add view flow button
+const baseURL = "http://127.0.0.1:9000" //TODO: clean up
 
 const flowRefresh = atom({
     key: 'flowRefresh', // unique ID (with respect to other atoms/selectors)
@@ -22,21 +23,42 @@ const flowRefresh = atom({
 });
 
 interface flow {
-    ID: string
+    ID: string,
+    HostIP: string,
     FlowName: string,
-    // ip: string, TODO: hostID
     Schedule: string,
     Tasks: task[],
+    Tunnel: tunnel
 }
 
 interface flowMenuProps {
-    Name: string
+    Name: string,
+    HostIP: string
 }
 
-const FlowMenu: React.FC<flowMenuProps> = ({ Name }) => {
+//TODO: get tunnels
+const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
+    const lookURL = async () => {
+        const url = baseURL + "/tunnels" + "/" + HostIP
+        var localAddr
+        await fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                if (result.error !== undefined) {
+                    alert(result.error)
+                } else {
+                    console.log(result)
+                    localAddr = result.LocalAddr
+                }
+            })
+        console.log(localAddr)
+        return localAddr
+    }
 
-    const handleStart = () => {
-        const url = baseURL + "/flows/start/" + Name
+    //TODO: find that tunnel to start
+    const handleStart = async () => {
+        const localAddr = await lookURL()
+        const url = "http://" + localAddr + "/flow/start/" + Name
         fetch(url,
             {
                 method: 'put',
@@ -116,9 +138,15 @@ interface tunnel {
     LocalAddr: string
 }
 
+const tunnelsState = atom({
+    key: 'tunnelsState', // unique ID (with respect to other atoms/selectors)
+    default: [{ LocalAddr: "127.0.0.1:9000" }] as tunnel[]
+});
+
 export const FlowList: React.FC = () => {
     const [flows, setFlows] = useState<flow[]>([])
-    const [tunnels, setTunnels] = useState<tunnel[]>([{ LocalAddr: "127.0.0.1:9000" }])
+    const [tunnels, setTunnels] = useRecoilState<tunnel[]>(tunnelsState)
+
     const flowRefreshTarget = selector({
         key: 'flowRefreshTarget', // unique ID (with respect to other atoms/selectors)
         get: ({ get }) => {
@@ -143,25 +171,23 @@ export const FlowList: React.FC = () => {
 
     useEffect(() => {
         async function fetchData() {
-            // Promise.all(
             tunnels.map(
                 async tunnel => (await fetch("http://" + tunnel.LocalAddr + "/flows"))
                     .json()
                     .then(res => setFlows(flows.concat(res))) //
                     .catch(err => console.log(err))
-                // )
             )
         }
         fetchData()
     }, [count, tunnels])
 
+    //TODO: send tunnel
     const setRows = () => {
         return flows.map((flow, index) =>
             <tbody key={index}>
                 <tr>
                     <td>{flow.FlowName}</td>
-
-                    <td>  <FlowMenu Name={flow.FlowName} /></td>
+                    <td>  <FlowMenu Name={flow.FlowName} HostIP={flow.HostIP} /></td>
                 </tr>
             </tbody>
         )
@@ -257,16 +283,23 @@ const TaskRun: React.FC<taskRunProps> = ({ tasks }) => {
 }
 
 export const FlowRun: React.FC = () => {
-    const url = baseURL + "/runs"
+    const tunnelsTargetState = selector({
+        key: 'tunnelsTargetState', // unique ID (with respect to other atoms/selectors)
+        get: ({ get }) => {
+            return get(tunnelsState);
+        },
+    });
+    const tunnels = useRecoilValue(tunnelsTargetState);
     const [runs, setRuns] = useState<run[]>([])
 
     useEffect(() => {
         async function fetchData() {
-            const res = await fetch(url)
-            res
-                .json()
-                .then(res => setRuns(res))
-                .catch(err => alert(err))
+            tunnels.map(
+                async tunnel => (await fetch("http://" + tunnel.LocalAddr + "/runs"))
+                    .json()
+                    .then(res => console.log(res)) //setRuns(runs.concat(res))
+                    .catch(err => console.log(err))
+            )
         }
         fetchData()
 
@@ -274,7 +307,7 @@ export const FlowRun: React.FC = () => {
             await fetchData()
         }, 60 * 1000);
         return () => clearInterval(interval);
-    }, [url])
+    }, [])
 
     const setRows = () => {
         return runs.map((run, index) =>
@@ -324,7 +357,6 @@ export const NewFlow: React.FC = () => {
     const [hosts, setHosts] = useState<host[]>([])
     const [host, setHost] = useState<host>()
     const [tasks, setTasks] = useState<task[]>()
-    // const [tunnelURL, setTunnelURL] = useState("")
     const [count, setCount] = useRecoilState(flowRefresh);
 
 

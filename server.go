@@ -191,6 +191,9 @@ func startFlow(c *gin.Context) {
 	name := c.Param("name")
 	var f Flow
 	db.Model(&f).Where("flow_name = ?", name).Update("status", "")
+	c.JSON(200, gin.H{
+		"message": "OK",
+	})
 }
 
 func stopFLow(c *gin.Context) {

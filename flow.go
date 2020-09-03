@@ -15,7 +15,7 @@ import (
 type Flow struct {
 	gorm.Model
 	FlowName string `gorm:"unique;not null"` //TODO: unique across two columns
-	HostID   uint   `gorm:"not null"`
+	HostIP   string `gorm:"not null"`
 	Schedule string `gorm:"not null"`
 	Status   string //used by db
 	CronID   int
@@ -43,7 +43,7 @@ type dep struct {
 type FlowRun struct {
 	gorm.Model
 	FlowID   uint
-	HostID   uint
+	HostIP   string
 	FlowName string
 	Time     time.Time
 	Status   string
@@ -63,7 +63,7 @@ func (f *Flow) run() {
 	done := make(chan struct{})
 
 	//create flow run
-	db.Create(&FlowRun{FlowID: f.ID, HostID: f.HostID, FlowName: f.FlowName, Time: time.Now(), Status: "READY"})
+	db.Create(&FlowRun{FlowID: f.ID, HostIP: f.HostIP, FlowName: f.FlowName, Time: time.Now(), Status: "READY"})
 	log.Info("Flow run created")
 
 	//get flow run
