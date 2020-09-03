@@ -13,6 +13,7 @@ flows:
     - new flow
 */
 
+//TODO: add host -> new selection
 const baseURL = "http://127.0.0.1:9000"
 
 const flowRefresh = atom({
@@ -111,28 +112,48 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name }) => {
     )
 }
 
+interface tunnel {
+    LocalAddr: string
+}
+
 export const FlowList: React.FC = () => {
-    const url = baseURL + "/flows"
     const [flows, setFlows] = useState<flow[]>([])
+    const [tunnels, setTunnels] = useState<tunnel[]>([{ LocalAddr: "127.0.0.1:9000" }])
     const flowRefreshTarget = selector({
         key: 'flowRefreshTarget', // unique ID (with respect to other atoms/selectors)
         get: ({ get }) => {
             return get(flowRefresh)
         },
     });
+
+    const getUrls = async () => {
+        const url = baseURL + "/tunnels"
+        const res = await fetch(url)
+        res
+            .json()
+            .then(res => setTunnels(tunnels.concat(res as tunnel[]))) // urls.concat(res as tunnel[])   
+            .catch(err => console.log(err))
+    }
+
     const count = useRecoilValue(flowRefreshTarget);
 
     useEffect(() => {
-        async function fetchData() {
-            const res = await fetch(url)
-            res
-                .json()
-                .then(res => setFlows(res))
-                .catch(err => alert(err))
-        }
+        getUrls()
+    }, [])
 
+    useEffect(() => {
+        async function fetchData() {
+            // Promise.all(
+            tunnels.map(
+                async tunnel => (await fetch("http://" + tunnel.LocalAddr + "/flows"))
+                    .json()
+                    .then(res => setFlows(flows.concat(res))) //
+                    .catch(err => console.log(err))
+                // )
+            )
+        }
         fetchData()
-    }, [url, count])
+    }, [count, tunnels])
 
     const setRows = () => {
         return flows.map((flow, index) =>
@@ -303,6 +324,7 @@ export const NewFlow: React.FC = () => {
     const [hosts, setHosts] = useState<host[]>([])
     const [host, setHost] = useState<host>()
     const [tasks, setTasks] = useState<task[]>()
+    // const [tunnelURL, setTunnelURL] = useState("")
     const [count, setCount] = useRecoilState(flowRefresh);
 
 
@@ -326,7 +348,24 @@ export const NewFlow: React.FC = () => {
         setTasks(tasks)
     }
 
-    const handleSubmit = () => {
+    const lookURL = async () => {
+        const url = baseURL + "/tunnels" + "/" + host?.IP
+        var localAddr
+        await fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                if (result.error !== undefined) {
+                    alert(result.error)
+                } else {
+                    console.log(result)
+                    localAddr = result.LocalAddr
+                }
+            })
+        console.log(localAddr)
+        return localAddr
+    }
+
+    const handleSubmit = async () => {
         const flow = {
             FlowName: name,
             Host: host,
@@ -334,7 +373,10 @@ export const NewFlow: React.FC = () => {
             Tasks: tasks,
         }
 
-        const url = baseURL + "/flows"
+        const localAddr = await lookURL()
+
+        const url = "http://" + localAddr + "/flows"
+        console.log("submit: ", url)
         fetch(url,
             {
                 method: 'post',

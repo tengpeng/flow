@@ -40,7 +40,29 @@ func server() *gin.Engine {
 	r.GET("/flows", getFlows)
 	r.GET("/runs", getRuns)
 
+	//tunnel
+	r.GET("/tunnels", getTunnels)
+	r.GET("/tunnels/:ip", getTunnelbyIP)
+
 	return r
+}
+
+//TODO: add type column
+//TODO: fix dev
+func getTunnelbyIP(c *gin.Context) {
+	ip := c.Param("ip")
+	var t Tunnel
+	if db.Where("server_addr LIKE ? AND type = ?", "%"+ip+"%", "dev").Find(&t).RecordNotFound() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": ip + " not found"})
+		return
+	}
+	c.JSON(200, t)
+}
+
+func getTunnels(c *gin.Context) {
+	var ts []Tunnel
+	db.Find(&ts) //TODO: exclude notebook tunnels
+	c.JSON(200, ts)
 }
 
 func allHosts(c *gin.Context) {
@@ -115,7 +137,7 @@ func newNotebook(c *gin.Context) {
 		return
 	}
 
-	newTunnel(h, false)
+	newTunnel(h, "notebook")
 
 	c.JSON(200, gin.H{
 		"message": "Open new notebook OK",

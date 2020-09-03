@@ -11,6 +11,7 @@ const GridLayoutWidth = WidthProvider(GridLayout)
 TODOs:
 - change font size to 12px
 - add draggable handle
+- fix double calls
 */
 export const Grid: React.FC = () => {
     const layout = [

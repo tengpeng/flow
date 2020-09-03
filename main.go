@@ -49,7 +49,7 @@ func main() {
 	r := server()
 
 	if *Worker {
-		runJupyter()
+		go runJupyter()
 		log.Info("Bayesnote flow worker started")
 		r.Run(":9000")
 	} else {
@@ -61,6 +61,7 @@ func main() {
 	}
 }
 
+//TODO: check if jupyter is already running
 func runJupyter() {
 	path, err := lookJupyter()
 	if err != nil {

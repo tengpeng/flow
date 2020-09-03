@@ -23,8 +23,8 @@ type Host struct {
 	gorm.Model
 	User     string `gorm:"not null"`
 	IP       string `gorm:"unique:not null"`
-	Password string `json:"Password"`
-	Pem      string `json:"Pem"`
+	Password string
+	Pem      string
 	Tunnels  []Tunnel
 
 	client *ssh.Client
@@ -36,6 +36,7 @@ type Tunnel struct {
 	LocalAddr  string `gorm:"not null"`
 	ServerAddr string `gorm:"not null"`
 	RemoteAddr string `gorm:"not null"`
+	Type       string
 	Forwarded  bool
 }
 
@@ -110,6 +111,10 @@ func (t *Tunnel) copy(sshClient *ssh.Client, localConn net.Conn) {
 	}
 
 	go func() {
+		if sshConn == nil || localConn == nil {
+			return
+		}
+
 		_, err = io.Copy(sshConn, localConn)
 		if err != nil {
 			log.Error("io.Copy failed: %v", err)
@@ -117,6 +122,10 @@ func (t *Tunnel) copy(sshClient *ssh.Client, localConn net.Conn) {
 	}()
 
 	go func() {
+		if sshConn == nil || localConn == nil {
+			return
+		}
+
 		_, err = io.Copy(localConn, sshConn)
 		if err != nil {
 			log.Error("io.Copy failed: %v", err)

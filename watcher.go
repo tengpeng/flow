@@ -82,22 +82,26 @@ func watchCoreTunnel() {
 			continue
 		}
 
-		newTunnel(h, true)
+		newTunnel(h, "dev")
 		break
 	}
 }
 
 //TODO: called by server to add Jupyter. Core fixed. Jupyter flexible
-func newTunnel(h Host, core bool) {
+func newTunnel(h Host, param string) {
 	var localAddr string
 	var RemoteAddr string
-	if core {
+
+	switch param {
+	case "dev":
 		localAddr = "127.0.0.1:8000"
 		RemoteAddr = "127.0.0.1:9000"
-
-	} else {
+	case "notebook":
 		localAddr = "127.0.0.1:" + getFreePort()
-		RemoteAddr = "127.0.0.1:8888"
+		RemoteAddr = "127.0.0.1:9000"
+	default:
+		localAddr = "127.0.0.1:" + getFreePort()
+		RemoteAddr = "127.0.0.1:9000"
 	}
 
 	t := Tunnel{
@@ -105,6 +109,7 @@ func newTunnel(h Host, core bool) {
 		ServerAddr: h.IP + ":" + p,
 		LocalAddr:  localAddr,
 		RemoteAddr: RemoteAddr,
+		Type:       param,
 	}
 	db.Save(&t)
 }
