@@ -56,7 +56,7 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
 
     const handleStart = async () => {
         var localAddr
-        if (HostIP != "127.0.0.1:9000") {
+        if (HostIP !== "127.0.0.1:9000") {
             localAddr = await lookURL()
         } else {
             localAddr = "127.0.0.1:9000"
@@ -82,7 +82,7 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
 
     const handleStop = async () => {
         var localAddr
-        if (HostIP != "127.0.0.1:9000") {
+        if (HostIP !== "127.0.0.1:9000") {
             localAddr = await lookURL()
         } else {
             localAddr = "127.0.0.1:9000"
@@ -108,8 +108,9 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
 
     //TODO: Failed to delete + should disappear
     const handleDelete = async () => {
+        console.log("handleDelete: ", HostIP)
         var localAddr
-        if (HostIP != "127.0.0.1:9000") {
+        if (HostIP !== "127.0.0.1:9000") {
             localAddr = await lookURL()
         } else {
             localAddr = "127.0.0.1:9000"
@@ -381,7 +382,7 @@ export const NewFlow: React.FC = () => {
     const [name, setName] = useState("")
     const [schedule, setSchedule] = useState("")
     const [hosts, setHosts] = useState<host[]>([{ IP: "127.0.0.1:9000" } as host])
-    const [host, setHost] = useState<host>()
+    const [host, setHost] = useState<host>({ IP: "127.0.0.1:9000" } as host)
     const [tasks, setTasks] = useState<task[]>()
     const [count, setCount] = useRecoilState(flowRefresh);
     const hostRefresh = useRecoilValue(hostRefreshTarget);
