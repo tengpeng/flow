@@ -23,12 +23,12 @@ const flowRefresh = atom({
 });
 
 interface flow {
-    ID: string,
+    ID?: string,
     HostIP: string,
     FlowName: string,
     Schedule: string,
     Tasks: task[],
-    Tunnel: tunnel
+    Tunnel?: tunnel
 }
 
 interface flowMenuProps {
@@ -39,7 +39,8 @@ interface flowMenuProps {
 //TODO: get tunnels
 const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
     const lookURL = async () => {
-        const url = baseURL + "/tunnels" + "/" + HostIP
+        const url = baseURL + "/tunnels/" + HostIP
+        console.log("FlowMenu:", url)
         var localAddr
         await fetch(url)
             .then(response => response.json())
@@ -51,14 +52,15 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
                     localAddr = result.LocalAddr
                 }
             })
-        console.log(localAddr)
+
         return localAddr
     }
 
     //TODO: find that tunnel to start
     const handleStart = async () => {
         const localAddr = await lookURL()
-        const url = "http://" + localAddr + "/flow/start/" + Name
+        console.log("handleStart: ", localAddr)
+        const url = "http://" + localAddr + "/flows/start/" + Name
         fetch(url,
             {
                 method: 'put',
@@ -76,9 +78,9 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
             });
     }
 
-    const handleStop = () => {
-        console.log("stop")
-        const url = baseURL + "/flows/stop/" + Name
+    const handleStop = async () => {
+        const localAddr = await lookURL()
+        const url = "http://" + localAddr + "/flows/stop/" + Name
         fetch(url,
             {
                 method: 'put',
@@ -94,14 +96,16 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
             .catch(error => {
                 alert(error)
             });
+        console.log(url)
     }
 
-    //TODO: should disappear
-    const handleDelete = () => {
-        const url = baseURL + "/flows/" + Name
+    //TODO: Failed to delete + should disappear
+    const handleDelete = async () => {
+        const localAddr = await lookURL()
+        const url = "http://" + localAddr + "/flows/delete/" + Name
         fetch(url,
             {
-                method: 'delete',
+                method: 'put',
             })
             .then(response => response.json())
             .then(result => {
@@ -287,14 +291,11 @@ export const FlowRun: React.FC = () => {
     const tunnelsTargetState = selector({
         key: 'tunnelsTargetState',
         get: ({ get }) => {
-            console.log(tunnelsState)
             return get(tunnelsState);
         },
     });
     const tunnels = useRecoilValue(tunnelsTargetState);
     const [runs, setRuns] = useState<run[]>([])
-
-    console.log(tunnels)
 
     useEffect(() => {
         async function fetchData() {
@@ -402,11 +403,11 @@ export const NewFlow: React.FC = () => {
     }
 
     const handleSubmit = async () => {
-        const flow = {
+        const flow: flow = {
             FlowName: name,
-            Host: host,
+            HostIP: host!.IP,
             Schedule: schedule,
-            Tasks: tasks,
+            Tasks: tasks!,
         }
 
         const localAddr = await lookURL()
