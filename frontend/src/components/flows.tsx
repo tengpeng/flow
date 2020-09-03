@@ -55,7 +55,12 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
     }
 
     const handleStart = async () => {
-        const localAddr = await lookURL()
+        var localAddr
+        if (HostIP != "127.0.0.1:9000") {
+            localAddr = await lookURL()
+        } else {
+            localAddr = "127.0.0.1:9000"
+        }
         console.log("handleStart: ", localAddr)
         const url = "http://" + localAddr + "/flows/start/" + Name
         fetch(url,
@@ -76,7 +81,12 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
     }
 
     const handleStop = async () => {
-        const localAddr = await lookURL()
+        var localAddr
+        if (HostIP != "127.0.0.1:9000") {
+            localAddr = await lookURL()
+        } else {
+            localAddr = "127.0.0.1:9000"
+        }
         const url = "http://" + localAddr + "/flows/stop/" + Name
         fetch(url,
             {
@@ -98,11 +108,16 @@ const FlowMenu: React.FC<flowMenuProps> = ({ Name, HostIP }) => {
 
     //TODO: Failed to delete + should disappear
     const handleDelete = async () => {
-        const localAddr = await lookURL()
-        const url = "http://" + localAddr + "/flows/delete/" + Name
+        var localAddr
+        if (HostIP != "127.0.0.1:9000") {
+            localAddr = await lookURL()
+        } else {
+            localAddr = "127.0.0.1:9000"
+        }
+        const url = "http://" + localAddr + "/flows/" + Name
         fetch(url,
             {
-                method: 'put',
+                method: 'delete',
             })
             .then(response => response.json())
             .then(result => {
@@ -144,6 +159,7 @@ const tunnelsState = atom({
     default: [{ LocalAddr: "127.0.0.1:9000" }] as tunnel[]
 });
 
+//BUG: 2 flow
 export const FlowList: React.FC = () => {
     const [flows, setFlows] = useState<flow[]>([])
     const [tunnels, setTunnels] = useRecoilState<tunnel[]>(tunnelsState)
@@ -364,7 +380,7 @@ export const NewFlow: React.FC = () => {
 
     const [name, setName] = useState("")
     const [schedule, setSchedule] = useState("")
-    const [hosts, setHosts] = useState<host[]>([{ IP: "127.0.0.1" } as host])
+    const [hosts, setHosts] = useState<host[]>([{ IP: "127.0.0.1:9000" } as host])
     const [host, setHost] = useState<host>()
     const [tasks, setTasks] = useState<task[]>()
     const [count, setCount] = useRecoilState(flowRefresh);
@@ -416,7 +432,12 @@ export const NewFlow: React.FC = () => {
             Tasks: tasks!,
         }
 
-        const localAddr = await lookURL()
+        var localAddr
+        if (flow.HostIP !== "127.0.0.1:9000") {
+            localAddr = await lookURL()
+        } else {
+            localAddr = "127.0.0.1:9000"
+        }
 
         const url = "http://" + localAddr + "/flows"
         console.log("submit: ", url)
