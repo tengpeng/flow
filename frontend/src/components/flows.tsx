@@ -2,7 +2,7 @@ import { Button, ControlGroup, Dialog, Divider, FormGroup, InputGroup, Menu, Men
 import { ItemRenderer, Select } from "@blueprintjs/select";
 import React, { useEffect, useState } from "react";
 import { atom, selector, useRecoilState, useRecoilValue } from "recoil";
-import { host } from "./hosts";
+import { host, hostRefresh } from "./hosts";
 
 
 /*
@@ -354,6 +354,14 @@ interface task {
     Next: string
 }
 
+//TODO: dup
+const hostRefreshTarget = selector({
+    key: 'hostRefreshTarget', // unique ID (with respect to other atoms/selectors)
+    get: ({ get }) => {
+        return get(hostRefresh)
+    },
+});
+
 export const NewFlow: React.FC = () => {
     const url = baseURL + "/hosts"
 
@@ -363,6 +371,7 @@ export const NewFlow: React.FC = () => {
     const [host, setHost] = useState<host>()
     const [tasks, setTasks] = useState<task[]>()
     const [count, setCount] = useRecoilState(flowRefresh);
+    const hostRefresh = useRecoilValue(hostRefreshTarget);
 
 
     useEffect(() => {
@@ -375,7 +384,7 @@ export const NewFlow: React.FC = () => {
         }
         fetchData()
 
-    }, [url])
+    }, [url, hostRefresh])
 
     const handleValueChange = (item: host) => {
         setHost(item)

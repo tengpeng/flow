@@ -5,7 +5,7 @@ import { AppToaster } from "./toasters";
 
 const baseURL = "http://127.0.0.1:9000"
 
-const hostRefresh = atom({
+export const hostRefresh = atom({
     key: 'hostRefresh', // unique ID (with respect to other atoms/selectors)
     default: 0, // default value (aka initial value)
 });

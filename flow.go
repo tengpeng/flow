@@ -51,6 +51,7 @@ type FlowRun struct {
 }
 
 type TaskRun struct {
+	gorm.Model
 	FlowRunID uint
 	Name      string
 	Path      string
